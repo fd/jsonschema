@@ -27,7 +27,11 @@ func (e *Env) RegisterKeyword(key string, priority int, v Validator) {
 	if _, found := e.keywords[key]; found {
 		panic("keyword is already registered")
 	}
-	e.keywords[key] = keyword{key, priority, reflect.TypeOf(v)}
+	rt := reflect.TypeOf(v)
+	if rt.Kind() != reflect.Ptr {
+		panic("Validator must be a pointer")
+	}
+	e.keywords[key] = keyword{key, priority, rt.Elem()}
 }
 
 func (e *Env) BuildSchema(v map[string]interface{}) (*Schema, error) {

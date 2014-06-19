@@ -5,38 +5,49 @@ import (
 	"reflect"
 )
 
-func TypeValidator(typ string) Validator {
-	return &typeValidator{typ}
-}
-
 type TypeValidationError struct {
-	expected []string
+	expected []PrimitiveType
 	was      reflect.Value
 }
 
+func (e *TypeValidationError) Error() string {
+	return fmt.Sprintf("expected type to be in %#v but was %#v", e.expected, e.was.Interface())
+}
+
 type typeValidator struct {
-	expects []string
+	expects []PrimitiveType
 }
 
 func (v *typeValidator) Setup(x interface{}, e *Env) error {
 	switch y := x.(type) {
 	case string:
-		v.expects = []string{y}
+		v.expects = []PrimitiveType{PrimitiveType(y)}
+
 	case []string:
-		v.expects = y
+		var z = make([]PrimitiveType, len(y))
+		for i, a := range y {
+			z[i] = PrimitiveType(a)
+		}
+		v.expects = z
+
+	case []interface{}:
+		var z = make([]PrimitiveType, len(y))
+		for i, a := range y {
+			if b, ok := a.(string); ok {
+				z[i] = PrimitiveType(b)
+			} else {
+				return fmt.Errorf("invalid type expectation: %#v", y)
+			}
+		}
+		v.expects = z
+
 	default:
-		return fmt.Errorf("invalid type expectation: %v", y)
+		return fmt.Errorf("invalid type expectation: %#v", y)
 	}
 
 	for _, t := range v.expects {
-		if t != "array" ||
-			t != "bool" ||
-			t != "integer" ||
-			t != "null" ||
-			t != "number" ||
-			t != "object" ||
-			t != "string" {
-			return fmt.Errorf("invalid type expectation: %v", t)
+		if !t.Valid() {
+			return fmt.Errorf("invalid type expectation: %#v", t)
 		}
 	}
 
@@ -44,40 +55,46 @@ func (v *typeValidator) Setup(x interface{}, e *Env) error {
 }
 
 func (v *typeValidator) Validate(x reflect.Value, ctx *Context) {
+	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
+		x = x.Elem()
+	}
+
 	kind := x.Kind()
 
 	for _, t := range v.expects {
 		switch t {
-		case "array":
-			if kind == reflect.Slice || kind == reflect.Array {
+		case ArrayType:
+			if isArray(x) {
+				ctx.Type = ArrayType
 				return
 			}
 
-		case "bool":
+		case BooleanType:
 			if kind == reflect.Bool {
+				ctx.Type = BooleanType
 				return
 			}
 
-		case "integer":
-			if kind == reflect.Int8 ||
-				kind == reflect.Int16 ||
-				kind == reflect.Int32 ||
-				kind == reflect.Int64 ||
-				kind == reflect.Int ||
-				kind == reflect.Uint8 ||
-				kind == reflect.Uint16 ||
-				kind == reflect.Uint32 ||
-				kind == reflect.Uint64 ||
-				kind == reflect.Uint {
+		case IntegerType:
+			if isInteger(x) {
+				ctx.Type = IntegerType
+				return
+			}
+			if isIntegerFloat(x) {
+				ctx.Type = IntegerType
 				return
 			}
 
-		case "null":
-			if x.IsNil() {
+		case NullType:
+			if (kind == reflect.Ptr ||
+				kind == reflect.Interface ||
+				kind == reflect.Map ||
+				kind == reflect.Slice) && x.IsNil() {
+				ctx.Type = NullType
 				return
 			}
 
-		case "number":
+		case NumberType:
 			if kind == reflect.Int8 ||
 				kind == reflect.Int16 ||
 				kind == reflect.Int32 ||
@@ -90,22 +107,25 @@ func (v *typeValidator) Validate(x reflect.Value, ctx *Context) {
 				kind == reflect.Uint ||
 				kind == reflect.Float32 ||
 				kind == reflect.Float64 {
+				ctx.Type = NumberType
 				return
 			}
 
-		case "object":
-			if kind == reflect.Map && x.Type().Key().Kind() == reflect.String {
+		case ObjectType:
+			if kind == reflect.Map && x.Type().Key().Kind() == reflect.String ||
+				kind == reflect.Struct {
+				ctx.Type = ObjectType
 				return
 			}
 
-		case "string":
-			if kind == reflect.String ||
-				kind == reflect.Slice && x.Type().Elem().Kind() == reflect.Uint8 {
+		case StringType:
+			if isString(x) {
+				ctx.Type = StringType
 				return
 			}
 
 		default:
-			panic("invalid type: " + v.expects)
+			panic("invalid type: " + t)
 		}
 	}
 
