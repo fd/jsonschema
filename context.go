@@ -1,11 +1,12 @@
 package jsonschema
 
 type Context struct {
-	Type             PrimitiveType
-	ExclusiveMaximum bool
-	ExclusiveMinimum bool
-	NextItem         int
-	errors           []error
+	Type              PrimitiveType
+	ExclusiveMaximum  bool
+	ExclusiveMinimum  bool
+	AdditionalItems   *Schema
+	PatternProperties []*patternProperty
+	errors            []error
 }
 
 func (c *Context) Report(err error) {

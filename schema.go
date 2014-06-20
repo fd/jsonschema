@@ -2,11 +2,13 @@ package jsonschema
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
 
 type Schema struct {
+	Id         string
 	Validators []Validator
 	Definition map[string]interface{}
 }
@@ -28,6 +30,21 @@ func (s *Schema) Validate(v interface{}) error {
 	}
 
 	return nil
+}
+
+func (s *Schema) ValidateData(d []byte) error {
+	var (
+		v interface{}
+	)
+
+	dec := json.NewDecoder(bytes.NewReader(d))
+	dec.UseNumber()
+	err := dec.Decode(&v)
+	if err != nil {
+		return err
+	}
+
+	return s.Validate(v)
 }
 
 type InvalidDocumentError struct {

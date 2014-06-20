@@ -30,6 +30,10 @@ func (v *multipleOfValidator) Setup(x interface{}, e *Env) error {
 		return fmt.Errorf("invalid 'multipleOf' definition: %#v (%s)", x, err)
 	}
 
+	if f < math.SmallestNonzeroFloat64 {
+		return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)
+	}
+
 	v.factor = f
 	return nil
 }
@@ -46,9 +50,9 @@ func (v *multipleOfValidator) Validate(x interface{}, ctx *Context) {
 		return
 	}
 
-	rem := math.Mod(f, v.factor)
-	ok = rem < math.SmallestNonzeroFloat64
-	fmt.Printf("f=%v factor=%v rem=%v ok=%v\n", f, v.factor, rem, ok)
+	rem := math.Abs(math.Remainder(f, v.factor))
+	rem /= v.factor // normalize rem between 0.0 and 1.0
+	ok = rem < 0.000000001
 
 	if !ok {
 		ctx.Report(&ErrNotMultipleOf{v.factor, x})

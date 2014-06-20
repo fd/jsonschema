@@ -63,19 +63,41 @@ func (v *itemsValidator) Validate(x interface{}, ctx *Context) {
 			if err != nil {
 				ctx.Report(&ErrInvalidItem{i, err})
 			}
-			ctx.NextItem = i + 1
 		}
+
+		// no additionalItems
+
 		return
 	}
 
 	if len(v.items) > 0 {
-		for i, la, lb := 0, len(y), len(v.items); i < la && i < lb; i++ {
+		var (
+			i  = 0
+			la = len(y)
+			lb = len(v.items)
+		)
+
+		for ; i < la && i < lb; i++ {
 			err := v.items[i].Validate(y[i])
 			if err != nil {
 				ctx.Report(&ErrInvalidItem{i, err})
 			}
-			ctx.NextItem = i + 1
 		}
+
+		// additionalItems
+		if ctx.AdditionalItems == additionalItemsDenied {
+			for ; i < la; i++ {
+				ctx.Report(&ErrInvalidItem{i, fmt.Errorf("additional item is not allowed")})
+			}
+		} else if ctx.AdditionalItems != nil {
+			for ; i < la; i++ {
+				err := ctx.AdditionalItems.Validate(y[i])
+				if err != nil {
+					ctx.Report(&ErrInvalidItem{i, err})
+				}
+			}
+		}
+
 		return
 	}
 }

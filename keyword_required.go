@@ -28,13 +28,13 @@ func (v *requiredValidator) Setup(x interface{}, e *Env) error {
 			if b, ok := a.(string); ok {
 				z[i] = b
 			} else {
-				return fmt.Errorf("invalid 'required' definition: %#v", y)
+				return fmt.Errorf("invalid 'required' definition: %#v", x)
 			}
 		}
 		v.required = z
 
 	default:
-		return fmt.Errorf("invalid 'required' definition: %#v", y)
+		return fmt.Errorf("invalid 'required' definition: %#v", x)
 	}
 
 	return nil

@@ -1,13 +1,18 @@
 package jsonschema
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"reflect"
 	"sort"
 )
 
-var DefaultEnv = NewEnv()
-
 type Env struct {
+	// schema definition for schemas that can be interpreted by this environment
+	SchemaSchema *Schema
+
+	schemas  map[string]*Schema
 	keywords map[string]keyword
 }
 
@@ -19,6 +24,7 @@ type keyword struct {
 
 func NewEnv() *Env {
 	return &Env{
+		schemas:  map[string]*Schema{},
 		keywords: map[string]keyword{},
 	}
 }
@@ -32,6 +38,42 @@ func (e *Env) RegisterKeyword(key string, priority int, v Validator) {
 		panic("Validator must be a pointer")
 	}
 	e.keywords[key] = keyword{key, priority, rt.Elem()}
+}
+
+func (e *Env) RegisterSchema(id string, data []byte) (*Schema, error) {
+	var (
+		obj map[string]interface{}
+	)
+
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+	err := dec.Decode(&obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if e.SchemaSchema != nil {
+		err := e.SchemaSchema.Validate(obj)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	schema, err := e.BuildSchema(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	if id, ok := obj["id"].(string); ok {
+		schema.Id = id
+	}
+
+	if schema.Id != id {
+		return nil, errors.New("schema id dit not match url")
+	}
+
+	e.schemas[id] = schema
+	return schema, nil
 }
 
 func (e *Env) BuildSchema(v map[string]interface{}) (*Schema, error) {

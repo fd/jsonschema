@@ -36,13 +36,13 @@ func (v *typeValidator) Setup(x interface{}, e *Env) error {
 			if b, ok := a.(string); ok {
 				z[i] = PrimitiveType(b)
 			} else {
-				return fmt.Errorf("invalid type expectation: %#v", y)
+				return fmt.Errorf("invalid type expectation: %#v", x)
 			}
 		}
 		v.expects = z
 
 	default:
-		return fmt.Errorf("invalid type expectation: %#v", y)
+		return fmt.Errorf("invalid type expectation: %#v", x)
 	}
 
 	for _, t := range v.expects {

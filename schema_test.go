@@ -11,7 +11,7 @@ func TestCoreIdenitySchema(t *testing.T) {
 	var def map[string]interface{}
 	load_test_json("core.json", &def)
 
-	schema, err := DefaultEnv.BuildSchema(def)
+	schema, err := RootEnv.BuildSchema(def)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,10 +90,15 @@ func run_test_suite(t *testing.T, path string) {
 
 	load_test_json(path, &suite)
 
+	var (
+		passed int
+		failed int
+	)
+
 	for _, group := range suite {
 		t.Logf("  - %s:", group.Description)
 
-		schema, err := DefaultEnv.BuildSchema(group.SchemaDef)
+		schema, err := RootEnv.BuildSchema(group.SchemaDef)
 		if err != nil {
 			t.Errorf("    error: %s", err)
 			continue
@@ -102,16 +107,26 @@ func run_test_suite(t *testing.T, path string) {
 		for _, test := range group.Tests {
 			err := schema.Validate(test.Data)
 			if test.Valid && err == nil {
+				passed++
 				t.Logf("    \x1B[32m✓\x1B[0m %s", test.Description)
 			} else if !test.Valid && err != nil {
+				passed++
 				t.Logf("    \x1B[32m✓\x1B[0m %s", test.Description)
 			} else if test.Valid && err != nil {
+				failed++
 				t.Logf("    \x1B[31m✗\x1B[0m %s", test.Description)
 				t.Errorf("      error: %s", err)
 			} else if !test.Valid && err == nil {
+				failed++
 				t.Logf("    \x1B[31m✗\x1B[0m %s", test.Description)
 				t.Errorf("      error: %s", "expected an error but non were generated")
 			}
 		}
+	}
+
+	if failed > 0 {
+		t.Logf("(\x1B[32mpassed: %d\x1B[0m \x1B[31mfaild: %d\x1B[0m)", passed, failed)
+	} else {
+		t.Logf("(\x1B[32mpassed: %d\x1B[0m)", passed)
 	}
 }

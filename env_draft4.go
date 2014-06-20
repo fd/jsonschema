@@ -1,0 +1,207 @@
+package jsonschema
+
+var RootEnv = NewEnv()
+
+func init() {
+	// any
+	RootEnv.RegisterKeyword("type", 100, &typeValidator{})
+	RootEnv.RegisterKeyword("enum", 101, &enumValidator{})
+	RootEnv.RegisterKeyword("anyOf", 102, &anyOfValidator{})
+	RootEnv.RegisterKeyword("allOf", 103, &allOfValidator{})
+	RootEnv.RegisterKeyword("oneOf", 104, &oneOfValidator{})
+	RootEnv.RegisterKeyword("not", 105, &notValidator{})
+	RootEnv.RegisterKeyword("definitions", 106, &definitionsValidator{})
+
+	// numbers
+	RootEnv.RegisterKeyword("multipleOf", 200, &multipleOfValidator{})
+	RootEnv.RegisterKeyword("exclusiveMaximum", 201, &exclusiveMaximumValidator{})
+	RootEnv.RegisterKeyword("exclusiveMinimum", 202, &exclusiveMinimumValidator{})
+	RootEnv.RegisterKeyword("maximum", 203, &maximumValidator{})
+	RootEnv.RegisterKeyword("minimum", 204, &minimumValidator{})
+
+	// strings
+	RootEnv.RegisterKeyword("maxLength", 300, &maxLengthValidator{})
+	RootEnv.RegisterKeyword("minLength", 301, &minLengthValidator{})
+	RootEnv.RegisterKeyword("pattern", 302, &patternValidator{})
+
+	// arrays
+	RootEnv.RegisterKeyword("additionalItems", 400, &additionalItemsValidator{})
+	RootEnv.RegisterKeyword("items", 401, &itemsValidator{})
+	RootEnv.RegisterKeyword("maxItems", 402, &maxItemsValidator{})
+	RootEnv.RegisterKeyword("minItems", 403, &minItemsValidator{})
+	RootEnv.RegisterKeyword("uniqueItems", 404, &uniqueItemsValidator{})
+
+	// objects
+	RootEnv.RegisterKeyword("maxProperties", 500, &maxPropertiesValidator{})
+	RootEnv.RegisterKeyword("minProperties", 501, &minPropertiesValidator{})
+	RootEnv.RegisterKeyword("required", 502, &requiredValidator{})
+	RootEnv.RegisterKeyword("patternProperties", 503, &patternPropertiesValidator{})
+	RootEnv.RegisterKeyword("properties", 504, &propertiesValidator{})
+	RootEnv.RegisterKeyword("dependencies", 505, &dependenciesValidator{})
+
+	// Set the root Schema
+	schema, err := RootEnv.RegisterSchema("http://json-schema.org/draft-04/schema#", draft4)
+	if err != nil {
+		panic(err)
+	}
+
+	err = schema.ValidateData(draft4)
+	if err != nil {
+		panic(err)
+	}
+
+	RootEnv.SchemaSchema = schema
+}
+
+var draft4 = []byte(`
+	{
+		"id": "http://json-schema.org/draft-04/schema#",
+		"$schema": "http://json-schema.org/draft-04/schema#",
+		"description": "Core schema meta-schema",
+		"definitions": {
+			"schemaArray": {
+				"type": "array",
+				"minItems": 1,
+				"items": { "$ref": "#" }
+			},
+			"positiveInteger": {
+				"type": "integer",
+				"minimum": 0
+			},
+			"positiveIntegerDefault0": {
+				"allOf": [ { "$ref": "#/definitions/positiveInteger" }, { "default": 0 } ]
+			},
+			"simpleTypes": {
+				"enum": [ "array", "boolean", "integer", "null", "number", "object", "string" ]
+			},
+			"stringArray": {
+				"type": "array",
+				"items": { "type": "string" },
+				"minItems": 1,
+				"uniqueItems": true
+			}
+		},
+		"type": "object",
+		"properties": {
+			"id": {
+				"type": "string",
+				"format": "uri"
+			},
+			"$schema": {
+				"type": "string",
+				"format": "uri"
+			},
+			"title": {
+				"type": "string"
+			},
+			"description": {
+				"type": "string"
+			},
+			"default": {},
+			"multipleOf": {
+				"type": "number",
+				"minimum": 0,
+				"exclusiveMinimum": true
+			},
+			"maximum": {
+				"type": "number"
+			},
+			"exclusiveMaximum": {
+				"type": "boolean",
+				"default": false
+			},
+			"minimum": {
+				"type": "number"
+			},
+			"exclusiveMinimum": {
+				"type": "boolean",
+				"default": false
+			},
+			"maxLength": { "$ref": "#/definitions/positiveInteger" },
+			"minLength": { "$ref": "#/definitions/positiveIntegerDefault0" },
+			"pattern": {
+				"type": "string",
+				"format": "regex"
+			},
+			"additionalItems": {
+				"anyOf": [
+					{ "type": "boolean" },
+					{ "$ref": "#" }
+				],
+				"default": {}
+			},
+			"items": {
+				"anyOf": [
+					{ "$ref": "#" },
+					{ "$ref": "#/definitions/schemaArray" }
+				],
+				"default": {}
+			},
+			"maxItems": { "$ref": "#/definitions/positiveInteger" },
+			"minItems": { "$ref": "#/definitions/positiveIntegerDefault0" },
+			"uniqueItems": {
+				"type": "boolean",
+				"default": false
+			},
+			"maxProperties": { "$ref": "#/definitions/positiveInteger" },
+			"minProperties": { "$ref": "#/definitions/positiveIntegerDefault0" },
+			"required": { "$ref": "#/definitions/stringArray" },
+			"additionalProperties": {
+				"anyOf": [
+					{ "type": "boolean" },
+					{ "$ref": "#" }
+				],
+				"default": {}
+			},
+			"definitions": {
+				"type": "object",
+				"additionalProperties": { "$ref": "#" },
+				"default": {}
+			},
+			"properties": {
+				"type": "object",
+				"additionalProperties": { "$ref": "#" },
+				"default": {}
+			},
+			"patternProperties": {
+				"type": "object",
+				"additionalProperties": { "$ref": "#" },
+				"default": {}
+			},
+			"dependencies": {
+				"type": "object",
+				"additionalProperties": {
+					"anyOf": [
+						{ "$ref": "#" },
+						{ "$ref": "#/definitions/stringArray" }
+					]
+				}
+			},
+			"enum": {
+				"type": "array",
+				"minItems": 1,
+				"uniqueItems": true
+			},
+			"type": {
+				"anyOf": [
+					{ "$ref": "#/definitions/simpleTypes" },
+					{
+						"type": "array",
+						"items": { "$ref": "#/definitions/simpleTypes" },
+						"minItems": 1,
+						"uniqueItems": true
+					}
+				]
+			},
+			"allOf": { "$ref": "#/definitions/schemaArray" },
+			"anyOf": { "$ref": "#/definitions/schemaArray" },
+			"oneOf": { "$ref": "#/definitions/schemaArray" },
+			"not": { "$ref": "#" }
+		},
+		"dependencies": {
+			"exclusiveMaximum": [ "maximum" ],
+			"exclusiveMinimum": [ "minimum" ]
+		},
+		"default": {}
+	}
+`)

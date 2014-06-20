@@ -2,7 +2,6 @@ package jsonschema
 
 import (
 	"fmt"
-	"reflect"
 )
 
 type ErrNotUnique struct {
@@ -34,10 +33,29 @@ func (v *uniqueItemsValidator) Validate(x interface{}, ctx *Context) {
 	}
 
 	l := len(y)
+	skip := make(map[int]bool, l)
 	for i := 0; i < l; i++ {
+		if skip[i] {
+			continue
+		}
 		for j := i + 1; j < l; j++ {
-			if reflect.DeepEqual(y[i], y[j]) {
-				ctx.Report(&ErrNotUnique{i, j, y[i]})
+			if skip[j] {
+				continue
+			}
+
+			a, b := y[i], y[j]
+
+			equal, err := isEqual(a, b)
+			if err != nil {
+				skip[j] = true
+				ctx.Report(err)
+				continue
+			}
+
+			// other values
+			if equal {
+				skip[j] = true
+				ctx.Report(&ErrNotUnique{i, j, a})
 			}
 		}
 	}
