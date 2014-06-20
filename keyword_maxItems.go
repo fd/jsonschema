@@ -9,7 +9,7 @@ type maxItemsValidator struct {
 	max int
 }
 
-func (v *maxItemsValidator) Setup(x interface{}, e *Env) error {
+func (v *maxItemsValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(json.Number)
 	if !ok {
 		return fmt.Errorf("invalid 'maxItems' definition: %#v", x)

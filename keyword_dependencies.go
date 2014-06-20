@@ -23,7 +23,7 @@ type dependenciesValidator struct {
 	dependencies map[string]interface{}
 }
 
-func (v *dependenciesValidator) Setup(x interface{}, e *Env) error {
+func (v *dependenciesValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(map[string]interface{})
 	if !ok || y == nil {
 		return fmt.Errorf("invalid 'dependencies' definition: %#v", x)
@@ -44,7 +44,7 @@ func (v *dependenciesValidator) Setup(x interface{}, e *Env) error {
 			dependencies[dependant] = deps
 
 		case map[string]interface{}:
-			schema, err := e.BuildSchema(b)
+			schema, err := builder.Build("/dependencies/"+escapeJSONPointer(dependant), b)
 			if err != nil {
 				return err
 			}

@@ -7,7 +7,7 @@ import (
 type definitionsValidator struct {
 }
 
-func (v *definitionsValidator) Setup(x interface{}, e *Env) error {
+func (v *definitionsValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(map[string]interface{})
 	if !ok || y == nil {
 		return fmt.Errorf("invalid 'definitions' definition: %#v", x)
@@ -20,7 +20,7 @@ func (v *definitionsValidator) Setup(x interface{}, e *Env) error {
 			return fmt.Errorf("invalid 'definitions' definition: %#v", x)
 		}
 
-		schema, err := e.BuildSchema(b)
+		schema, err := builder.Build("/definitions/"+escapeJSONPointer(name), b)
 		if err != nil {
 			return err
 		}

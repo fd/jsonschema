@@ -9,7 +9,7 @@ type minPropertiesValidator struct {
 	min int
 }
 
-func (v *minPropertiesValidator) Setup(x interface{}, e *Env) error {
+func (v *minPropertiesValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(json.Number)
 	if !ok {
 		return fmt.Errorf("invalid 'minProperties' definition: %#v", x)

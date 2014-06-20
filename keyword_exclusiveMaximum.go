@@ -8,7 +8,7 @@ type exclusiveMaximumValidator struct {
 	exclusive bool
 }
 
-func (v *exclusiveMaximumValidator) Setup(x interface{}, e *Env) error {
+func (v *exclusiveMaximumValidator) Setup(x interface{}, builder Builder) error {
 	if y, ok := x.(bool); ok && y {
 		v.exclusive = true
 	}

@@ -23,7 +23,7 @@ type minimumValidator struct {
 	min float64
 }
 
-func (v *minimumValidator) Setup(x interface{}, e *Env) error {
+func (v *minimumValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(json.Number)
 	if !ok {
 		return fmt.Errorf("invalid 'minimum' definition: %#v", x)

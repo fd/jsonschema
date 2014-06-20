@@ -18,7 +18,7 @@ type typeValidator struct {
 	expects []PrimitiveType
 }
 
-func (v *typeValidator) Setup(x interface{}, e *Env) error {
+func (v *typeValidator) Setup(x interface{}, builder Builder) error {
 	switch y := x.(type) {
 	case string:
 		v.expects = []PrimitiveType{PrimitiveType(y)}

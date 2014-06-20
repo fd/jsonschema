@@ -6,11 +6,46 @@ type Context struct {
 	ExclusiveMinimum  bool
 	AdditionalItems   *Schema
 	PatternProperties []*patternProperty
-	errors            []error
+
+	value   interface{}
+	errors  []error
+	results map[string]error
 }
 
 func (c *Context) Report(err error) {
 	c.errors = append(c.errors, err)
+}
+
+func (c *Context) ValidateWith(schema *Schema) error {
+	if schema.RefSchema != nil {
+		return c.ValidateWith(schema.RefSchema)
+	}
+
+	id := normalizeRef(schema.Id.String())
+	if err, found := c.results[id]; found {
+		return err
+	}
+
+	c.results[id] = nil
+
+	var (
+		ctx Context
+		err error
+	)
+
+	ctx.value = c.value
+	ctx.results = c.results
+
+	for _, validator := range schema.Validators {
+		validator.Validate(ctx.value, &ctx)
+	}
+
+	if len(ctx.errors) > 0 {
+		err = &InvalidDocumentError{schema, ctx.errors}
+		c.results[id] = err
+	}
+
+	return err
 }
 
 type PrimitiveType string

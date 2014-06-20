@@ -17,13 +17,13 @@ type notValidator struct {
 	schema *Schema
 }
 
-func (v *notValidator) Setup(x interface{}, e *Env) error {
+func (v *notValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(map[string]interface{})
 	if !ok || y == nil {
 		return fmt.Errorf("invalid 'not' definition: %#v", x)
 	}
 
-	schema, err := e.BuildSchema(y)
+	schema, err := builder.Build("/not", y)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (v *notValidator) Setup(x interface{}, e *Env) error {
 }
 
 func (v *notValidator) Validate(x interface{}, ctx *Context) {
-	err := v.schema.Validate(x)
+	err := ctx.ValidateWith(v.schema)
 	if err == nil {
 		ctx.Report(&ErrNotNot{x, v.schema})
 	}

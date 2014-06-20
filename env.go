@@ -3,9 +3,8 @@ package jsonschema
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"reflect"
-	"sort"
 )
 
 type Env struct {
@@ -41,6 +40,16 @@ func (e *Env) RegisterKeyword(key string, priority int, v Validator) {
 }
 
 func (e *Env) RegisterSchema(id string, data []byte) (*Schema, error) {
+	schema, err := e.BuildSchema(id, data)
+	if err != nil {
+		return nil, err
+	}
+
+	e.schemas[schema.Id.String()] = schema
+	return schema, nil
+}
+
+func (e *Env) BuildSchema(id string, data []byte) (*Schema, error) {
 	var (
 		obj map[string]interface{}
 	)
@@ -59,52 +68,19 @@ func (e *Env) RegisterSchema(id string, data []byte) (*Schema, error) {
 		}
 	}
 
-	schema, err := e.BuildSchema(obj)
+	builder := newBuilder(e)
+	schema, err := builder.Build(id, obj)
 	if err != nil {
 		return nil, err
 	}
 
-	if id, ok := obj["id"].(string); ok {
-		schema.Id = id
+	err = builder.resolve()
+	if err != nil {
+		return nil, err
 	}
 
-	if schema.Id != id {
-		return nil, errors.New("schema id dit not match url")
-	}
-
-	e.schemas[id] = schema
-	return schema, nil
-}
-
-func (e *Env) BuildSchema(v map[string]interface{}) (*Schema, error) {
-	var (
-		order      []int
-		validators = map[int]Validator{}
-		schema     = &Schema{}
-	)
-
-	schema.Definition = v
-
-	for k, x := range v {
-		keyword, found := e.keywords[k]
-		if !found {
-			continue
-		}
-
-		validator := reflect.New(keyword.prototype).Interface().(Validator)
-		err := validator.Setup(x, e)
-		if err != nil {
-			return nil, err
-		}
-
-		order = append(order, keyword.priority)
-		validators[keyword.priority] = validator
-	}
-
-	sort.Ints(order)
-
-	for _, i := range order {
-		schema.Validators = append(schema.Validators, validators[i])
+	if id != "" && normalizeRef(schema.Id.String()) != id {
+		return nil, fmt.Errorf("schema id dit not match url (%q != %q)", id, schema.Id)
 	}
 
 	return schema, nil

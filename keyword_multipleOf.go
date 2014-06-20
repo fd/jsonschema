@@ -19,7 +19,7 @@ type multipleOfValidator struct {
 	factor float64
 }
 
-func (v *multipleOfValidator) Setup(x interface{}, e *Env) error {
+func (v *multipleOfValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(json.Number)
 	if !ok {
 		return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"reflect"
+	"strings"
 )
 
 func isEqual(a, b interface{}) (bool, error) {
@@ -29,4 +30,40 @@ func isEqual(a, b interface{}) (bool, error) {
 	// other values
 	return reflect.DeepEqual(a, b), nil
 
+}
+
+func isRef(x interface{}) (string, bool) {
+	m, ok := x.(map[string]interface{})
+	if !ok {
+		return "", false
+	}
+
+	refi, found := m["$ref"]
+	if !found {
+		return "", false
+	}
+
+	ref, ok := refi.(string)
+	if !ok {
+		return "", false
+	}
+
+	if strings.IndexByte(ref, '#') < 0 {
+		ref += "#"
+	}
+
+	return ref, true
+}
+
+func escapeJSONPointer(s string) string {
+	s = strings.Replace(s, "~", "~0", -1)
+	s = strings.Replace(s, "/", "~1", -1)
+	return s
+}
+
+func normalizeRef(r string) string {
+	if strings.IndexByte(r, '#') < 0 {
+		r += "#"
+	}
+	return r
 }

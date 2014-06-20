@@ -8,7 +8,7 @@ type exclusiveMinimumValidator struct {
 	exclusive bool
 }
 
-func (v *exclusiveMinimumValidator) Setup(x interface{}, e *Env) error {
+func (v *exclusiveMinimumValidator) Setup(x interface{}, builder Builder) error {
 	if y, ok := x.(bool); ok && y {
 		v.exclusive = true
 	}

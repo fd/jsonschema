@@ -18,7 +18,7 @@ type uniqueItemsValidator struct {
 	unique bool
 }
 
-func (v *uniqueItemsValidator) Setup(x interface{}, e *Env) error {
+func (v *uniqueItemsValidator) Setup(x interface{}, builder Builder) error {
 	if y, ok := x.(bool); ok && y {
 		v.unique = true
 	}

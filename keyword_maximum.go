@@ -23,7 +23,7 @@ type maximumValidator struct {
 	max float64
 }
 
-func (v *maximumValidator) Setup(x interface{}, e *Env) error {
+func (v *maximumValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(json.Number)
 	if !ok {
 		return fmt.Errorf("invalid 'maximum' definition: %#v", x)

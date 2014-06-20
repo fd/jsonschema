@@ -9,7 +9,7 @@ type maxPropertiesValidator struct {
 	max int
 }
 
-func (v *maxPropertiesValidator) Setup(x interface{}, e *Env) error {
+func (v *maxPropertiesValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.(json.Number)
 	if !ok {
 		return fmt.Errorf("invalid 'maxProperties' definition: %#v", x)

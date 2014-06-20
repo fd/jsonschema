@@ -37,7 +37,7 @@ type anyOfValidator struct {
 	schemas []*Schema
 }
 
-func (v *anyOfValidator) Setup(x interface{}, e *Env) error {
+func (v *anyOfValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.([]interface{})
 	if !ok || y == nil {
 		return fmt.Errorf("invalid 'anyOf' definition: %#v", x)
@@ -50,7 +50,7 @@ func (v *anyOfValidator) Setup(x interface{}, e *Env) error {
 			return fmt.Errorf("invalid 'anyOf' definition: %#v", x)
 		}
 
-		schema, err := e.BuildSchema(b)
+		schema, err := builder.Build(fmt.Sprintf("/anyOf/%d", i), b)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (v *anyOfValidator) Validate(x interface{}, ctx *Context) {
 	)
 
 	for i, schema := range v.schemas {
-		err := schema.Validate(x)
+		err := ctx.ValidateWith(schema)
 		if err == nil {
 			return
 		}

@@ -18,11 +18,11 @@ type itemsValidator struct {
 	items []*Schema
 }
 
-func (v *itemsValidator) Setup(x interface{}, e *Env) error {
+func (v *itemsValidator) Setup(x interface{}, builder Builder) error {
 	switch y := x.(type) {
 
 	case map[string]interface{}:
-		s, err := e.BuildSchema(y)
+		s, err := builder.Build("/items", y)
 		if err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func (v *itemsValidator) Setup(x interface{}, e *Env) error {
 			if !ok {
 				return fmt.Errorf("invalid 'items' definition: %#v", x)
 			}
-			s, err := e.BuildSchema(b)
+			s, err := builder.Build(fmt.Sprintf("/items/%d", i), b)
 			if err != nil {
 				return err
 			}

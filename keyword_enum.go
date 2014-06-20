@@ -17,7 +17,7 @@ type enumValidator struct {
 	enum []interface{}
 }
 
-func (v *enumValidator) Setup(x interface{}, e *Env) error {
+func (v *enumValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.([]interface{})
 	if !ok || y == nil || len(y) == 0 {
 		return fmt.Errorf("invalid 'enum' definition: %#v", x)

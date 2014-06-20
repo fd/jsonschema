@@ -17,7 +17,7 @@ type propertiesValidator struct {
 	members map[string]*Schema
 }
 
-func (v *propertiesValidator) Setup(x interface{}, e *Env) error {
+func (v *propertiesValidator) Setup(x interface{}, builder Builder) error {
 	defs, ok := x.(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid 'properties' definition: %#v", x)
@@ -30,7 +30,7 @@ func (v *propertiesValidator) Setup(x interface{}, e *Env) error {
 			return fmt.Errorf("invalid 'properties' definition: %#v", x)
 		}
 
-		schema, err := e.BuildSchema(mdef)
+		schema, err := builder.Build("/properties/"+escapeJSONPointer(k), mdef)
 		if err != nil {
 			return err
 		}

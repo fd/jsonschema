@@ -37,7 +37,7 @@ type oneOfValidator struct {
 	schemas []*Schema
 }
 
-func (v *oneOfValidator) Setup(x interface{}, e *Env) error {
+func (v *oneOfValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.([]interface{})
 	if !ok || y == nil {
 		return fmt.Errorf("invalid 'oneOf' definition: %#v", x)
@@ -50,7 +50,7 @@ func (v *oneOfValidator) Setup(x interface{}, e *Env) error {
 			return fmt.Errorf("invalid 'oneOf' definition: %#v", x)
 		}
 
-		schema, err := e.BuildSchema(b)
+		schema, err := builder.Build(fmt.Sprintf("/oneOf/%d", i), b)
 		if err != nil {
 			return err
 		}
@@ -69,7 +69,7 @@ func (v *oneOfValidator) Validate(x interface{}, ctx *Context) {
 	)
 
 	for i, schema := range v.schemas {
-		err := schema.Validate(x)
+		err := ctx.ValidateWith(schema)
 
 		if err == nil {
 			passed++

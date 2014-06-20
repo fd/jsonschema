@@ -40,7 +40,7 @@ func init() {
 	RootEnv.RegisterKeyword("dependencies", 505, &dependenciesValidator{})
 
 	// Set the root Schema
-	schema, err := RootEnv.RegisterSchema("http://json-schema.org/draft-04/schema#", draft4)
+	schema, err := RootEnv.RegisterSchema("", draft4)
 	if err != nil {
 		panic(err)
 	}

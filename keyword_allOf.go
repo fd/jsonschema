@@ -37,7 +37,7 @@ type allOfValidator struct {
 	schemas []*Schema
 }
 
-func (v *allOfValidator) Setup(x interface{}, e *Env) error {
+func (v *allOfValidator) Setup(x interface{}, builder Builder) error {
 	y, ok := x.([]interface{})
 	if !ok || y == nil {
 		return fmt.Errorf("invalid 'allOf' definition: %#v", x)
@@ -50,7 +50,7 @@ func (v *allOfValidator) Setup(x interface{}, e *Env) error {
 			return fmt.Errorf("invalid 'allOf' definition: %#v", x)
 		}
 
-		schema, err := e.BuildSchema(b)
+		schema, err := builder.Build(fmt.Sprintf("/allOf/%d", i), b)
 		if err != nil {
 			return err
 		}
@@ -69,7 +69,7 @@ func (v *allOfValidator) Validate(x interface{}, ctx *Context) {
 	)
 
 	for i, schema := range v.schemas {
-		err := schema.Validate(x)
+		err := ctx.ValidateWith(schema)
 
 		if err != nil {
 			failed = true

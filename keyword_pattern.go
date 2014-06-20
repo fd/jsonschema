@@ -19,7 +19,7 @@ type patternValidator struct {
 	regexp  *regexp.Regexp
 }
 
-func (v *patternValidator) Setup(x interface{}, e *Env) error {
+func (v *patternValidator) Setup(x interface{}, builder Builder) error {
 	if y, ok := x.(string); ok {
 		r, err := regexp.Compile(y)
 		if err != nil {

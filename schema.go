@@ -4,32 +4,31 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 )
 
 type Schema struct {
-	Id         string
+	Id         *url.URL
+	Ref        *url.URL
+	RefSchema  *Schema
 	Validators []Validator
 	Definition map[string]interface{}
 }
 
 type Validator interface {
-	Setup(x interface{}, e *Env) error
+	Setup(x interface{}, b Builder) error
 	Validate(interface{}, *Context)
 }
 
 func (s *Schema) Validate(v interface{}) error {
-	var ctx Context
+	var (
+		ctx Context
+	)
 
-	for _, validator := range s.Validators {
-		validator.Validate(v, &ctx)
-	}
-
-	if len(ctx.errors) > 0 {
-		return &InvalidDocumentError{s, ctx.errors}
-	}
-
-	return nil
+	ctx.value = v
+	ctx.results = map[string]error{}
+	return ctx.ValidateWith(s)
 }
 
 func (s *Schema) ValidateData(d []byte) error {

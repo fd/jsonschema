@@ -11,7 +11,7 @@ func TestCoreIdenitySchema(t *testing.T) {
 	var def map[string]interface{}
 	load_test_json("core.json", &def)
 
-	schema, err := RootEnv.BuildSchema(def)
+	schema, err := RootEnv.BuildSchema("", load_test_data("core.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,8 +79,8 @@ func run_test_suite(t *testing.T, path string) {
 	t.Logf("- %s", path)
 
 	var suite []struct {
-		Description string                 `json:"description"`
-		SchemaDef   map[string]interface{} `json:"schema"`
+		Description string          `json:"description"`
+		SchemaDef   json.RawMessage `json:"schema"`
 		Tests       []struct {
 			Description string      `json:"description"`
 			Data        interface{} `json:"data"`
@@ -98,7 +98,7 @@ func run_test_suite(t *testing.T, path string) {
 	for _, group := range suite {
 		t.Logf("  - %s:", group.Description)
 
-		schema, err := RootEnv.BuildSchema(group.SchemaDef)
+		schema, err := RootEnv.BuildSchema("", group.SchemaDef)
 		if err != nil {
 			t.Errorf("    error: %s", err)
 			continue

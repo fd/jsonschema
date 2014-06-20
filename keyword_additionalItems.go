@@ -10,11 +10,11 @@ type additionalItemsValidator struct {
 	item *Schema
 }
 
-func (v *additionalItemsValidator) Setup(x interface{}, e *Env) error {
+func (v *additionalItemsValidator) Setup(x interface{}, builder Builder) error {
 	switch y := x.(type) {
 
 	case map[string]interface{}:
-		s, err := e.BuildSchema(y)
+		s, err := builder.Build("/additionalItems", y)
 		if err != nil {
 			return err
 		}

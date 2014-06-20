@@ -16,7 +16,7 @@ type requiredValidator struct {
 	required []string
 }
 
-func (v *requiredValidator) Setup(x interface{}, e *Env) error {
+func (v *requiredValidator) Setup(x interface{}, builder Builder) error {
 	switch y := x.(type) {
 
 	case []string:

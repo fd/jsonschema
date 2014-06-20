@@ -15,7 +15,7 @@ type patternPropertiesValidator struct {
 	patterns []*patternProperty
 }
 
-func (v *patternPropertiesValidator) Setup(x interface{}, e *Env) error {
+func (v *patternPropertiesValidator) Setup(x interface{}, builder Builder) error {
 	defs, ok := x.(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("invalid 'patternProperties' definition: %#v", x)
@@ -33,7 +33,7 @@ func (v *patternPropertiesValidator) Setup(x interface{}, e *Env) error {
 			return fmt.Errorf("invalid 'patternProperties' definition: %#v (%s)", x, err)
 		}
 
-		schema, err := e.BuildSchema(mdef)
+		schema, err := builder.Build("/patternProperties/"+escapeJSONPointer(k), mdef)
 		if err != nil {
 			return err
 		}
