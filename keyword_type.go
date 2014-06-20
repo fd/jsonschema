@@ -1,17 +1,17 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
-type TypeValidationError struct {
+type ErrInvalidType struct {
 	expected []PrimitiveType
-	was      reflect.Value
+	was      interface{}
 }
 
-func (e *TypeValidationError) Error() string {
-	return fmt.Sprintf("expected type to be in %#v but was %#v", e.expected, e.was.Interface())
+func (e *ErrInvalidType) Error() string {
+	return fmt.Sprintf("expected type to be in %#v but was %#v", e.expected, e.was)
 }
 
 type typeValidator struct {
@@ -54,72 +54,53 @@ func (v *typeValidator) Setup(x interface{}, e *Env) error {
 	return nil
 }
 
-func (v *typeValidator) Validate(x reflect.Value, ctx *Context) {
-	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
-		x = x.Elem()
-	}
-
-	kind := x.Kind()
-
+func (v *typeValidator) Validate(x interface{}, ctx *Context) {
 	for _, t := range v.expects {
 		switch t {
 		case ArrayType:
-			if isArray(x) {
+			if _, ok := x.([]interface{}); ok && x != nil {
 				ctx.Type = ArrayType
 				return
 			}
 
 		case BooleanType:
-			if kind == reflect.Bool {
+			if _, ok := x.(bool); ok {
 				ctx.Type = BooleanType
 				return
 			}
 
 		case IntegerType:
-			if isInteger(x) {
-				ctx.Type = IntegerType
-				return
-			}
-			if isIntegerFloat(x) {
-				ctx.Type = IntegerType
-				return
+			if y, ok := x.(json.Number); ok {
+				_, err := y.Int64()
+				if err == nil {
+					ctx.Type = IntegerType
+					return
+				}
 			}
 
 		case NullType:
-			if (kind == reflect.Ptr ||
-				kind == reflect.Interface ||
-				kind == reflect.Map ||
-				kind == reflect.Slice) && x.IsNil() {
+			if x == nil {
 				ctx.Type = NullType
 				return
 			}
 
 		case NumberType:
-			if kind == reflect.Int8 ||
-				kind == reflect.Int16 ||
-				kind == reflect.Int32 ||
-				kind == reflect.Int64 ||
-				kind == reflect.Int ||
-				kind == reflect.Uint8 ||
-				kind == reflect.Uint16 ||
-				kind == reflect.Uint32 ||
-				kind == reflect.Uint64 ||
-				kind == reflect.Uint ||
-				kind == reflect.Float32 ||
-				kind == reflect.Float64 {
-				ctx.Type = NumberType
-				return
+			if y, ok := x.(json.Number); ok {
+				_, err := y.Float64()
+				if err == nil {
+					ctx.Type = NumberType
+					return
+				}
 			}
 
 		case ObjectType:
-			if kind == reflect.Map && x.Type().Key().Kind() == reflect.String ||
-				kind == reflect.Struct {
+			if _, ok := x.(map[string]interface{}); ok && x != nil {
 				ctx.Type = ObjectType
 				return
 			}
 
 		case StringType:
-			if isString(x) {
+			if _, ok := x.(string); ok {
 				ctx.Type = StringType
 				return
 			}
@@ -129,5 +110,5 @@ func (v *typeValidator) Validate(x reflect.Value, ctx *Context) {
 		}
 	}
 
-	ctx.Report(&TypeValidationError{expected: v.expects, was: x})
+	ctx.Report(&ErrInvalidType{expected: v.expects, was: x})
 }

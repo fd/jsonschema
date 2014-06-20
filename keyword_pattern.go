@@ -2,17 +2,16 @@ package jsonschema
 
 import (
 	"fmt"
-	"reflect"
 	"regexp"
 )
 
-type InvalidPatternError struct {
+type ErrInvalidPattern struct {
 	pattern string
-	was     reflect.Value
+	was     string
 }
 
-func (e *InvalidPatternError) Error() string {
-	return fmt.Sprintf("expected %#v to be maych %q", e.was.Interface(), e.pattern)
+func (e *ErrInvalidPattern) Error() string {
+	return fmt.Sprintf("expected %#v to be maych %q", e.was, e.pattern)
 }
 
 type patternValidator struct {
@@ -34,24 +33,13 @@ func (v *patternValidator) Setup(x interface{}, e *Env) error {
 	return fmt.Errorf("invalid 'pattern' definition: %#v", x)
 }
 
-func (v *patternValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isString(x) {
+func (v *patternValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.(string)
+	if !ok {
 		return
 	}
 
-	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
-		x = x.Elem()
-	}
-
-	ok := false
-
-	if x.Kind() == reflect.String {
-		ok = v.regexp.MatchString(x.String())
-	} else if x.Kind() == reflect.Slice {
-		ok = v.regexp.Match(x.Interface().([]byte))
-	}
-
-	if !ok {
-		ctx.Report(&InvalidPatternError{v.pattern, x})
+	if !v.regexp.MatchString(y) {
+		ctx.Report(&ErrInvalidPattern{v.pattern, y})
 	}
 }

@@ -1,17 +1,18 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
+	"unicode/utf8"
 )
 
-type LargerThanMaxLengthError struct {
+type ErrTooLong struct {
 	max int
-	was reflect.Value
+	was interface{}
 }
 
-func (e *LargerThanMaxLengthError) Error() string {
-	return fmt.Sprintf("expected len(%#v) to be smaller than %v", e.was.Interface(), e.max)
+func (e *ErrTooLong) Error() string {
+	return fmt.Sprintf("expected len(%#v) to be smaller than %v", e.was, e.max)
 }
 
 type maxLengthValidator struct {
@@ -19,57 +20,29 @@ type maxLengthValidator struct {
 }
 
 func (v *maxLengthValidator) Setup(x interface{}, e *Env) error {
-	xv := reflect.ValueOf(x)
-
-	switch xv.Kind() {
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-
-		i := xv.Int()
-		v.max = int(i)
-
-	case
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-
-		i := xv.Uint()
-		v.max = int(i)
-
-	case
-		reflect.Float32,
-		reflect.Float64:
-
-		if isIntegerFloat(xv) {
-			v.max = int(xv.Float())
-		} else {
-			return fmt.Errorf("invalid 'maxLength' definition: %#v", x)
-		}
-
-	default:
+	y, ok := x.(json.Number)
+	if !ok {
 		return fmt.Errorf("invalid 'maxLength' definition: %#v", x)
-
 	}
 
+	i, err := y.Int64()
+	if err != nil {
+		return fmt.Errorf("invalid 'maxLength' definition: %#v (%s)", x, err)
+	}
+
+	v.max = int(i)
 	return nil
 }
 
-func (v *maxLengthValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isString(x) {
+func (v *maxLengthValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.(string)
+	if !ok {
 		return
 	}
 
-	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
-		x = x.Elem()
-	}
+	l := utf8.RuneCountInString(y)
 
-	if x.Len() > v.max {
-		ctx.Report(&LargerThanMaxLengthError{v.max, x})
+	if l > v.max {
+		ctx.Report(&ErrTooLong{v.max, x})
 	}
 }

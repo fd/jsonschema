@@ -1,152 +1,56 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
-	"reflect"
 )
 
-type NotMultipleOfError struct {
-	intFactor   int64
-	floatFactor float64
-	was         reflect.Value
+type ErrNotMultipleOf struct {
+	factor float64
+	was    interface{}
 }
 
-func (e *NotMultipleOfError) Error() string {
-	if e.intFactor > 0 {
-		return fmt.Sprintf("expected %#v to be a multiple of %v", e.was.Interface(), e.intFactor)
-	} else {
-		return fmt.Sprintf("expected %#v to be a multiple of %v", e.was.Interface(), e.floatFactor)
-	}
+func (e *ErrNotMultipleOf) Error() string {
+	return fmt.Sprintf("expected %#v to be a multiple of %v", e.was, e.factor)
 }
 
 type multipleOfValidator struct {
-	intFactor   int64
-	floatFactor float64
+	factor float64
 }
 
 func (v *multipleOfValidator) Setup(x interface{}, e *Env) error {
-	xv := reflect.ValueOf(x)
-
-	switch xv.Kind() {
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-
-		i := xv.Int()
-		if i <= 0 {
-			return fmt.Errorf("multipleOf must be greater than 0 (was: %v)", i)
-		}
-		v.intFactor = int64(i)
-		v.floatFactor = float64(i)
-
-	case
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-
-		i := xv.Uint()
-		if i <= 0 {
-			return fmt.Errorf("multipleOf must be greater than 0 (was: %v)", i)
-		}
-		if i > math.MaxInt64 {
-			return fmt.Errorf("multipleOf is too large %v", i)
-		}
-		v.intFactor = int64(i)
-		v.floatFactor = float64(i)
-
-	case
-		reflect.Float32,
-		reflect.Float64:
-
-		i := xv.Float()
-		if i < math.SmallestNonzeroFloat64 {
-			return fmt.Errorf("multipleOf must be greater than 0.0 (was: %v)", i)
-		}
-		v.floatFactor = i
-		if math.Trunc(i) == i {
-			if i > float64(math.MaxInt64) {
-				return fmt.Errorf("multipleOf is too large %v", i)
-			}
-			v.intFactor = int64(i)
-		}
-
-	default:
-		return fmt.Errorf("invalid multipleOf definition: %#v", x)
-
+	y, ok := x.(json.Number)
+	if !ok {
+		return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)
 	}
 
+	f, err := y.Float64()
+	if err != nil {
+		return fmt.Errorf("invalid 'multipleOf' definition: %#v (%s)", x, err)
+	}
+
+	v.factor = f
 	return nil
 }
 
-func (v *multipleOfValidator) Validate(x reflect.Value, ctx *Context) {
-	if ctx.Type != IntegerType && ctx.Type != NumberType {
+func (v *multipleOfValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.(json.Number)
+	if !ok {
 		return
 	}
 
-	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
-		x = x.Elem()
+	f, err := y.Float64()
+	if err != nil {
+		ctx.Report(err)
+		return
 	}
 
-	kind := x.Kind()
-
-	ok := false
-	if v.intFactor > 0 {
-		if kind == reflect.Float32 ||
-			kind == reflect.Float64 {
-			f := x.Float()
-			if math.Trunc(f) != f {
-				ctx.Report(&NotMultipleOfError{v.intFactor, v.floatFactor, x})
-				return
-			}
-			ok = int64(f)%v.intFactor == 0
-
-		} else if kind == reflect.Int ||
-			kind == reflect.Int8 ||
-			kind == reflect.Int16 ||
-			kind == reflect.Int32 ||
-			kind == reflect.Int64 {
-			ok = x.Int()%v.intFactor == 0
-
-		} else if kind == reflect.Uint ||
-			kind == reflect.Uint8 ||
-			kind == reflect.Uint16 ||
-			kind == reflect.Uint32 ||
-			kind == reflect.Uint64 {
-			ok = x.Uint()%uint64(v.intFactor) == 0
-		}
-
-	} else {
-		if kind == reflect.Float32 ||
-			kind == reflect.Float64 {
-			ok = math.Remainder(x.Float(), v.floatFactor) < math.SmallestNonzeroFloat64
-
-		} else if kind == reflect.Int ||
-			kind == reflect.Int8 ||
-			kind == reflect.Int16 ||
-			kind == reflect.Int32 ||
-			kind == reflect.Int64 {
-			f := float64(x.Int())
-			ok = math.Remainder(f, v.floatFactor) < math.SmallestNonzeroFloat64
-
-		} else if kind == reflect.Uint ||
-			kind == reflect.Uint8 ||
-			kind == reflect.Uint16 ||
-			kind == reflect.Uint32 ||
-			kind == reflect.Uint64 {
-			f := float64(x.Uint())
-			ok = math.Remainder(f, v.floatFactor) < math.SmallestNonzeroFloat64
-
-		}
-
-	}
+	rem := math.Mod(f, v.factor)
+	ok = rem < math.SmallestNonzeroFloat64
+	fmt.Printf("f=%v factor=%v rem=%v ok=%v\n", f, v.factor, rem, ok)
 
 	if !ok {
-		ctx.Report(&NotMultipleOfError{v.intFactor, v.floatFactor, x})
+		ctx.Report(&ErrNotMultipleOf{v.factor, x})
 	}
 }

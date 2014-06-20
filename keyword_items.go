@@ -2,15 +2,14 @@ package jsonschema
 
 import (
 	"fmt"
-	"reflect"
 )
 
-type ItemValidationError struct {
+type ErrInvalidItem struct {
 	Index int
 	Err   error
 }
 
-func (e *ItemValidationError) Error() string {
+func (e *ErrInvalidItem) Error() string {
 	return fmt.Sprintf("Invalid item at %v: %s", e.Index, e.Err)
 }
 
@@ -52,16 +51,17 @@ func (v *itemsValidator) Setup(x interface{}, e *Env) error {
 	}
 }
 
-func (v *itemsValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isArray(x) {
+func (v *itemsValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.([]interface{})
+	if !ok || y == nil {
 		return
 	}
 
 	if v.item != nil {
-		for i, l := 0, x.Len(); i < l; i++ {
-			err := v.item.ValidateValue(x.Index(i))
+		for i, l := 0, len(y); i < l; i++ {
+			err := v.item.Validate(y[i])
 			if err != nil {
-				ctx.Report(&ItemValidationError{i, err})
+				ctx.Report(&ErrInvalidItem{i, err})
 			}
 			ctx.NextItem = i + 1
 		}
@@ -69,10 +69,10 @@ func (v *itemsValidator) Validate(x reflect.Value, ctx *Context) {
 	}
 
 	if len(v.items) > 0 {
-		for i, la, lb := 0, x.Len(), len(v.items); i < la && i < lb; i++ {
-			err := v.items[i].ValidateValue(x.Index(i))
+		for i, la, lb := 0, len(y), len(v.items); i < la && i < lb; i++ {
+			err := v.items[i].Validate(y[i])
 			if err != nil {
-				ctx.Report(&ItemValidationError{i, err})
+				ctx.Report(&ErrInvalidItem{i, err})
 			}
 			ctx.NextItem = i + 1
 		}

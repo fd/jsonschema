@@ -1,7 +1,7 @@
 package jsonschema
 
 import (
-	"reflect"
+	"encoding/json"
 )
 
 type exclusiveMaximumValidator struct {
@@ -16,8 +16,9 @@ func (v *exclusiveMaximumValidator) Setup(x interface{}, e *Env) error {
 	return nil
 }
 
-func (v *exclusiveMaximumValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isInteger(x) && !isFloat(x) {
+func (v *exclusiveMaximumValidator) Validate(x interface{}, ctx *Context) {
+	_, ok := x.(json.Number)
+	if !ok {
 		return
 	}
 

@@ -2,7 +2,6 @@ package jsonschema
 
 import (
 	"fmt"
-	"reflect"
 )
 
 type additionalItemsValidator struct {
@@ -32,8 +31,9 @@ func (v *additionalItemsValidator) Setup(x interface{}, e *Env) error {
 	}
 }
 
-func (v *additionalItemsValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isArray(x) {
+func (v *additionalItemsValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.([]interface{})
+	if !ok || y == nil {
 		return
 	}
 
@@ -42,18 +42,18 @@ func (v *additionalItemsValidator) Validate(x reflect.Value, ctx *Context) {
 			return
 		}
 
-		for i, l := ctx.NextItem, x.Len(); i < l; i++ {
-			ctx.Report(&ItemValidationError{i, fmt.Errorf("additional item is not allowed")})
+		for i, l := ctx.NextItem, len(y); i < l; i++ {
+			ctx.Report(&ErrInvalidItem{i, fmt.Errorf("additional item is not allowed")})
 			ctx.NextItem = i + 1
 		}
 		return
 	}
 
 	if v.allowed && v.item != nil {
-		for i, l := ctx.NextItem, x.Len(); i < l; i++ {
-			err := v.item.ValidateValue(x.Index(i))
+		for i, l := ctx.NextItem, len(y); i < l; i++ {
+			err := v.item.Validate(y[i])
 			if err != nil {
-				ctx.Report(&ItemValidationError{i, err})
+				ctx.Report(&ErrInvalidItem{i, err})
 			}
 			ctx.NextItem = i + 1
 		}

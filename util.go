@@ -5,9 +5,12 @@ import (
 	"reflect"
 )
 
-func isArray(x reflect.Value) bool {
+func isObject(x reflect.Value) bool {
 	kind := x.Kind()
-	return (kind == reflect.Slice || kind == reflect.Array) && !x.IsNil()
+	if kind == reflect.Map && x.Type().Key().Kind() == reflect.String && !x.IsNil() {
+		return true
+	}
+	return kind == reflect.Struct
 }
 
 func isInteger(x reflect.Value) bool {

@@ -1,17 +1,18 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
+	"unicode/utf8"
 )
 
-type LargerThanMinLengthError struct {
+type ErrTooShort struct {
 	min int
-	was reflect.Value
+	was interface{}
 }
 
-func (e *LargerThanMinLengthError) Error() string {
-	return fmt.Sprintf("expected len(%#v) to be larger than %v", e.was.Interface(), e.min)
+func (e *ErrTooShort) Error() string {
+	return fmt.Sprintf("expected len(%#v) to be larger than %v", e.was, e.min)
 }
 
 type minLengthValidator struct {
@@ -19,57 +20,29 @@ type minLengthValidator struct {
 }
 
 func (v *minLengthValidator) Setup(x interface{}, e *Env) error {
-	xv := reflect.ValueOf(x)
-
-	switch xv.Kind() {
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-
-		i := xv.Int()
-		v.min = int(i)
-
-	case
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-
-		i := xv.Uint()
-		v.min = int(i)
-
-	case
-		reflect.Float32,
-		reflect.Float64:
-
-		if isIntegerFloat(xv) {
-			v.min = int(xv.Float())
-		} else {
-			return fmt.Errorf("invalid 'minLength' definition: %#v", x)
-		}
-
-	default:
+	y, ok := x.(json.Number)
+	if !ok {
 		return fmt.Errorf("invalid 'minLength' definition: %#v", x)
-
 	}
 
+	i, err := y.Int64()
+	if err != nil {
+		return fmt.Errorf("invalid 'minLength' definition: %#v (%s)", x, err)
+	}
+
+	v.min = int(i)
 	return nil
 }
 
-func (v *minLengthValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isString(x) {
+func (v *minLengthValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.(string)
+	if !ok {
 		return
 	}
 
-	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
-		x = x.Elem()
-	}
+	l := utf8.RuneCountInString(y)
 
-	if x.Len() < v.min {
-		ctx.Report(&LargerThanMinLengthError{v.min, x})
+	if l < v.min {
+		ctx.Report(&ErrTooShort{v.min, x})
 	}
 }

@@ -3,7 +3,6 @@ package jsonschema
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -14,14 +13,10 @@ type Schema struct {
 
 type Validator interface {
 	Setup(x interface{}, e *Env) error
-	Validate(reflect.Value, *Context)
+	Validate(interface{}, *Context)
 }
 
 func (s *Schema) Validate(v interface{}) error {
-	return s.ValidateValue(reflect.ValueOf(v))
-}
-
-func (s *Schema) ValidateValue(v reflect.Value) error {
 	var ctx Context
 
 	for _, validator := range s.Validators {

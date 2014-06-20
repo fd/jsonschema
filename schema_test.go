@@ -1,6 +1,7 @@
 package jsonschema
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
@@ -66,7 +67,9 @@ func load_test_data(path string) []byte {
 }
 
 func load_test_json(path string, v interface{}) {
-	err := json.Unmarshal(load_test_data(path), v)
+	dec := json.NewDecoder(bytes.NewReader(load_test_data(path)))
+	dec.UseNumber()
+	err := dec.Decode(v)
 	if err != nil {
 		panic(err)
 	}
@@ -99,14 +102,14 @@ func run_test_suite(t *testing.T, path string) {
 		for _, test := range group.Tests {
 			err := schema.Validate(test.Data)
 			if test.Valid && err == nil {
-				t.Logf("    ✓ %s", test.Description)
+				t.Logf("    \x1B[32m✓\x1B[0m %s", test.Description)
 			} else if !test.Valid && err != nil {
-				t.Logf("    ✓ %s", test.Description)
+				t.Logf("    \x1B[32m✓\x1B[0m %s", test.Description)
 			} else if test.Valid && err != nil {
-				t.Logf("    ✗ %s", test.Description)
+				t.Logf("    \x1B[31m✗\x1B[0m %s", test.Description)
 				t.Errorf("      error: %s", err)
 			} else if !test.Valid && err == nil {
-				t.Logf("    ✗ %s", test.Description)
+				t.Logf("    \x1B[31m✗\x1B[0m %s", test.Description)
 				t.Errorf("      error: %s", "expected an error but non were generated")
 			}
 		}

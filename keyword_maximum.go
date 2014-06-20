@@ -1,21 +1,21 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
-type LargerThanMaximumError struct {
+type ErrTooLarge struct {
 	max       float64
 	exclusive bool
-	was       reflect.Value
+	was       interface{}
 }
 
-func (e *LargerThanMaximumError) Error() string {
+func (e *ErrTooLarge) Error() string {
 	if e.exclusive {
-		return fmt.Sprintf("expected %#v to be smaller than %v", e.was.Interface(), e.max)
+		return fmt.Sprintf("expected %#v to be smaller than %v", e.was, e.max)
 	} else {
-		return fmt.Sprintf("expected %#v to be smaller than or equal to %v", e.was.Interface(), e.max)
+		return fmt.Sprintf("expected %#v to be smaller than or equal to %v", e.was, e.max)
 	}
 }
 
@@ -24,79 +24,30 @@ type maximumValidator struct {
 }
 
 func (v *maximumValidator) Setup(x interface{}, e *Env) error {
-	xv := reflect.ValueOf(x)
-
-	switch xv.Kind() {
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-
-		i := xv.Int()
-		v.max = float64(i)
-
-	case
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-
-		i := xv.Uint()
-		v.max = float64(i)
-
-	case
-		reflect.Float32,
-		reflect.Float64:
-
-		v.max = xv.Float()
-
-	default:
+	y, ok := x.(json.Number)
+	if !ok {
 		return fmt.Errorf("invalid 'maximum' definition: %#v", x)
-
 	}
 
+	f, err := y.Float64()
+	if err != nil {
+		return fmt.Errorf("invalid 'maximum' definition: %#v (%s)", x, err)
+	}
+
+	v.max = f
 	return nil
 }
 
-func (v *maximumValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isInteger(x) && !isFloat(x) {
+func (v *maximumValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.(json.Number)
+	if !ok {
 		return
 	}
 
-	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
-		x = x.Elem()
-	}
-
-	var (
-		f  float64
-		ok bool
-	)
-
-	switch x.Kind() {
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-		f = float64(x.Int())
-
-	case
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-		f = float64(x.Uint())
-
-	case
-		reflect.Float32,
-		reflect.Float64:
-		f = x.Float()
-
+	f, err := y.Float64()
+	if err != nil {
+		ctx.Report(err)
+		return
 	}
 
 	if ctx.ExclusiveMaximum {
@@ -104,9 +55,8 @@ func (v *maximumValidator) Validate(x reflect.Value, ctx *Context) {
 	} else {
 		ok = f <= v.max
 	}
-	fmt.Printf("excl=%v max=%v f=%v ok=%v\n", ctx.ExclusiveMaximum, v.max, f, ok)
 
 	if !ok {
-		ctx.Report(&LargerThanMaximumError{v.max, ctx.ExclusiveMaximum, x})
+		ctx.Report(&ErrTooLarge{v.max, ctx.ExclusiveMaximum, x})
 	}
 }

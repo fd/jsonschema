@@ -18,7 +18,13 @@ func init() {
 	// arrays
 	DefaultEnv.RegisterKeyword("items", 400, &itemsValidator{})
 	DefaultEnv.RegisterKeyword("additionalItems", 401, &additionalItemsValidator{})
+	DefaultEnv.RegisterKeyword("maxItems", 402, &maxItemsValidator{})
+	DefaultEnv.RegisterKeyword("minItems", 403, &minItemsValidator{})
+	DefaultEnv.RegisterKeyword("uniqueItems", 404, &uniqueItemsValidator{})
 
 	// objects
-	DefaultEnv.RegisterKeyword("properties", 500, &propertiesValidator{})
+	DefaultEnv.RegisterKeyword("maxProperties", 500, &maxPropertiesValidator{})
+	DefaultEnv.RegisterKeyword("minProperties", 501, &minPropertiesValidator{})
+	DefaultEnv.RegisterKeyword("required", 502, &requiredValidator{})
+	DefaultEnv.RegisterKeyword("properties", 503, &propertiesValidator{})
 }

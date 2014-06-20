@@ -1,21 +1,21 @@
 package jsonschema
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
-type SmallerThanMinimumError struct {
+type ErrTooSmall struct {
 	min       float64
 	exclusive bool
-	was       reflect.Value
+	was       interface{}
 }
 
-func (e *SmallerThanMinimumError) Error() string {
+func (e *ErrTooSmall) Error() string {
 	if e.exclusive {
-		return fmt.Sprintf("expected %#v to be larger than %v", e.was.Interface(), e.min)
+		return fmt.Sprintf("expected %#v to be larger than %v", e.was, e.min)
 	} else {
-		return fmt.Sprintf("expected %#v to be larger than or equal to %v", e.was.Interface(), e.min)
+		return fmt.Sprintf("expected %#v to be larger than or equal to %v", e.was, e.min)
 	}
 }
 
@@ -24,79 +24,30 @@ type minimumValidator struct {
 }
 
 func (v *minimumValidator) Setup(x interface{}, e *Env) error {
-	xv := reflect.ValueOf(x)
-
-	switch xv.Kind() {
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-
-		i := xv.Int()
-		v.min = float64(i)
-
-	case
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-
-		i := xv.Uint()
-		v.min = float64(i)
-
-	case
-		reflect.Float32,
-		reflect.Float64:
-
-		v.min = xv.Float()
-
-	default:
+	y, ok := x.(json.Number)
+	if !ok {
 		return fmt.Errorf("invalid 'minimum' definition: %#v", x)
-
 	}
 
+	f, err := y.Float64()
+	if err != nil {
+		return fmt.Errorf("invalid 'minimum' definition: %#v (%s)", x, err)
+	}
+
+	v.min = f
 	return nil
 }
 
-func (v *minimumValidator) Validate(x reflect.Value, ctx *Context) {
-	if !isInteger(x) && !isFloat(x) {
+func (v *minimumValidator) Validate(x interface{}, ctx *Context) {
+	y, ok := x.(json.Number)
+	if !ok {
 		return
 	}
 
-	for x.Kind() == reflect.Interface || x.Kind() == reflect.Ptr {
-		x = x.Elem()
-	}
-
-	var (
-		f  float64
-		ok bool
-	)
-
-	switch x.Kind() {
-	case
-		reflect.Int,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64:
-		f = float64(x.Int())
-
-	case
-		reflect.Uint,
-		reflect.Uint8,
-		reflect.Uint16,
-		reflect.Uint32,
-		reflect.Uint64:
-		f = float64(x.Uint())
-
-	case
-		reflect.Float32,
-		reflect.Float64:
-		f = x.Float()
-
+	f, err := y.Float64()
+	if err != nil {
+		ctx.Report(err)
+		return
 	}
 
 	if ctx.ExclusiveMinimum {
@@ -106,6 +57,6 @@ func (v *minimumValidator) Validate(x reflect.Value, ctx *Context) {
 	}
 
 	if !ok {
-		ctx.Report(&SmallerThanMinimumError{v.min, ctx.ExclusiveMinimum, x})
+		ctx.Report(&ErrTooSmall{v.min, ctx.ExclusiveMinimum, x})
 	}
 }
