@@ -9,12 +9,19 @@ import (
 
 type Builder interface {
 	Build(pointer string, v map[string]interface{}) (*Schema, error)
+	GetFormatValidator(name string) FormatValidator
+	GetKeyword(s string) (interface{}, bool)
 }
 
 type builder struct {
 	env        *Env
-	stack      []*Schema
+	stack      []*builderStackFrame
 	references map[string]*Schema
+}
+
+type builderStackFrame struct {
+	schema   *Schema
+	keywords map[string]bool
 }
 
 func newBuilder(env *Env) *builder {
@@ -22,6 +29,10 @@ func newBuilder(env *Env) *builder {
 		env:        env,
 		references: map[string]*Schema{},
 	}
+}
+
+func (b *builder) GetFormatValidator(name string) FormatValidator {
+	return b.env.formats[name]
 }
 
 func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, error) {
@@ -41,7 +52,7 @@ func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, erro
 		)
 
 		if l := len(b.stack); l > 0 {
-			base = b.stack[l-1].Id
+			base = b.stack[l-1].schema.Id
 		}
 
 		if x, ok := v["id"].(string); ok && x != "" {
@@ -84,34 +95,60 @@ func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, erro
 			return nil, err
 		}
 
+		fragment := ref.Fragment
+
 		if base != nil {
 			ref = base.ResolveReference(ref)
 		}
+
+		ref.Fragment = fragment
 
 		schema.Ref = ref
 		return schema, nil
 	}
 
-	b.stack = append(b.stack, schema)
+	frame := &builderStackFrame{
+		schema:   schema,
+		keywords: make(map[string]bool, len(v)),
+	}
+	b.stack = append(b.stack, frame)
 	defer func() { b.stack = b.stack[:len(b.stack)-1] }()
 
 	validators = map[int]Validator{}
 	schema.Definition = v
 
-	for k, x := range v {
-		keyword, found := b.env.keywords[k]
+	var ready = map[*validator]bool{}
+	for k := range v {
+		validatorDef, found := b.env.validators[k]
 		if !found {
 			continue
 		}
+		if ready[validatorDef] {
+			continue
+		}
+		ready[validatorDef] = true
 
-		validator := reflect.New(keyword.prototype).Interface().(Validator)
-		err := validator.Setup(x, b)
+		frame.keywords[k] = true
+
+		validator := reflect.New(validatorDef.prototype).Interface().(Validator)
+		err := validator.Setup(b)
 		if err != nil {
 			return nil, err
 		}
 
-		order = append(order, keyword.priority)
-		validators[keyword.priority] = validator
+		order = append(order, validatorDef.priority)
+		validators[validatorDef.priority] = validator
+	}
+
+	for k, x := range v {
+		if !frame.keywords[k] {
+			if y, ok := x.(map[string]interface{}); ok && y != nil {
+				_, err := b.Build("/"+escapeJSONPointer(k), y)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
 	}
 
 	sort.Ints(order)
@@ -139,12 +176,14 @@ func (b *builder) resolve() error {
 		refSchema, found := b.references[ref]
 		if found && refSchema != nil {
 			schema.RefSchema = refSchema
+			// fmt.Printf("%q => %q\n", normalizeRef(schema.Id.String()), normalizeRef(refSchema.Id.String()))
 			continue
 		}
 
 		refSchema, found = b.env.schemas[ref]
 		if found && refSchema != nil {
 			schema.RefSchema = refSchema
+			// fmt.Printf("%q => %q\n", normalizeRef(schema.Id.String()), normalizeRef(refSchema.Id.String()))
 			continue
 		}
 
@@ -152,4 +191,14 @@ func (b *builder) resolve() error {
 	}
 
 	return nil
+}
+
+func (b *builder) GetKeyword(s string) (interface{}, bool) {
+	if len(b.stack) == 0 {
+		return nil, false
+	}
+	frame := b.stack[len(b.stack)-1]
+	frame.keywords[s] = true
+	v, ok := frame.schema.Definition[s]
+	return v, ok
 }

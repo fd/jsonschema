@@ -13,42 +13,68 @@ func (e *ErrInvalidItem) Error() string {
 	return fmt.Sprintf("Invalid item at %v: %s", e.Index, e.Err)
 }
 
+var additionalItemsDenied = &Schema{}
+
 type itemsValidator struct {
-	item  *Schema
-	items []*Schema
+	item           *Schema
+	items          []*Schema
+	additionalItem *Schema
 }
 
-func (v *itemsValidator) Setup(x interface{}, builder Builder) error {
-	switch y := x.(type) {
+func (v *itemsValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("items"); found {
+		switch y := x.(type) {
 
-	case map[string]interface{}:
-		s, err := builder.Build("/items", y)
-		if err != nil {
-			return err
-		}
-		v.item = s
-		return nil
-
-	case []interface{}:
-		l := make([]*Schema, len(y))
-		for i, a := range y {
-			b, ok := a.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("invalid 'items' definition: %#v", x)
-			}
-			s, err := builder.Build(fmt.Sprintf("/items/%d", i), b)
+		case map[string]interface{}:
+			s, err := builder.Build("/items", y)
 			if err != nil {
 				return err
 			}
-			l[i] = s
+			v.item = s
+
+		case []interface{}:
+			l := make([]*Schema, len(y))
+			for i, a := range y {
+				b, ok := a.(map[string]interface{})
+				if !ok {
+					return fmt.Errorf("invalid 'items' definition: %#v", y)
+				}
+				s, err := builder.Build(fmt.Sprintf("/items/%d", i), b)
+				if err != nil {
+					return err
+				}
+				l[i] = s
+			}
+			v.items = l
+
+		default:
+			return fmt.Errorf("invalid 'items' definition: %#v", y)
+
 		}
-		v.items = l
-		return nil
-
-	default:
-		return fmt.Errorf("invalid 'items' definition: %#v", x)
-
 	}
+
+	if x, ok := builder.GetKeyword("additionalItems"); ok {
+		switch y := x.(type) {
+
+		case map[string]interface{}:
+			s, err := builder.Build("/additionalItems", y)
+			if err != nil {
+				return err
+			}
+			v.additionalItem = s
+
+		case bool:
+			if !y {
+				v.additionalItem = additionalItemsDenied
+			}
+
+		default:
+			return fmt.Errorf("invalid 'additionalItems' definition: %#v", y)
+
+		}
+	}
+
+	return nil
 }
 
 func (v *itemsValidator) Validate(x interface{}, ctx *Context) {
@@ -85,13 +111,13 @@ func (v *itemsValidator) Validate(x interface{}, ctx *Context) {
 		}
 
 		// additionalItems
-		if ctx.AdditionalItems == additionalItemsDenied {
+		if v.additionalItem == additionalItemsDenied {
 			for ; i < la; i++ {
 				ctx.Report(&ErrInvalidItem{i, fmt.Errorf("additional item is not allowed")})
 			}
-		} else if ctx.AdditionalItems != nil {
+		} else if v.additionalItem != nil {
 			for ; i < la; i++ {
-				err := ctx.AdditionalItems.Validate(y[i])
+				err := v.additionalItem.Validate(y[i])
 				if err != nil {
 					ctx.Report(&ErrInvalidItem{i, err})
 				}

@@ -9,18 +9,20 @@ type maxPropertiesValidator struct {
 	max int
 }
 
-func (v *maxPropertiesValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.(json.Number)
-	if !ok {
-		return fmt.Errorf("invalid 'maxProperties' definition: %#v", x)
-	}
+func (v *maxPropertiesValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("maxProperties"); found {
+		y, ok := x.(json.Number)
+		if !ok {
+			return fmt.Errorf("invalid 'maxProperties' definition: %#v", x)
+		}
 
-	i, err := y.Int64()
-	if err != nil {
-		return fmt.Errorf("invalid 'maxProperties' definition: %#v (%s)", x, err)
-	}
+		i, err := y.Int64()
+		if err != nil {
+			return fmt.Errorf("invalid 'maxProperties' definition: %#v (%s)", x, err)
+		}
 
-	v.max = int(i)
+		v.max = int(i)
+	}
 	return nil
 }
 

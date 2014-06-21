@@ -19,18 +19,20 @@ type minLengthValidator struct {
 	min int
 }
 
-func (v *minLengthValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.(json.Number)
-	if !ok {
-		return fmt.Errorf("invalid 'minLength' definition: %#v", x)
-	}
+func (v *minLengthValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("minLength"); found {
+		y, ok := x.(json.Number)
+		if !ok {
+			return fmt.Errorf("invalid 'minLength' definition: %#v", x)
+		}
 
-	i, err := y.Int64()
-	if err != nil {
-		return fmt.Errorf("invalid 'minLength' definition: %#v (%s)", x, err)
-	}
+		i, err := y.Int64()
+		if err != nil {
+			return fmt.Errorf("invalid 'minLength' definition: %#v (%s)", x, err)
+		}
 
-	v.min = int(i)
+		v.min = int(i)
+	}
 	return nil
 }
 

@@ -9,18 +9,20 @@ type maxItemsValidator struct {
 	max int
 }
 
-func (v *maxItemsValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.(json.Number)
-	if !ok {
-		return fmt.Errorf("invalid 'maxItems' definition: %#v", x)
-	}
+func (v *maxItemsValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("maxItems"); found {
+		y, ok := x.(json.Number)
+		if !ok {
+			return fmt.Errorf("invalid 'maxItems' definition: %#v", x)
+		}
 
-	i, err := y.Int64()
-	if err != nil {
-		return fmt.Errorf("invalid 'maxItems' definition: %#v (%s)", x, err)
-	}
+		i, err := y.Int64()
+		if err != nil {
+			return fmt.Errorf("invalid 'maxItems' definition: %#v (%s)", x, err)
+		}
 
-	v.max = int(i)
+		v.max = int(i)
+	}
 	return nil
 }
 

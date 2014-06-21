@@ -100,6 +100,7 @@ func run_test_suite(t *testing.T, path string) {
 
 		schema, err := RootEnv.BuildSchema("", group.SchemaDef)
 		if err != nil {
+			failed++
 			t.Errorf("    error: %s", err)
 			continue
 		}

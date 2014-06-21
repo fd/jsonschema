@@ -1,11 +1,7 @@
 package jsonschema
 
 type Context struct {
-	Type              PrimitiveType
-	ExclusiveMaximum  bool
-	ExclusiveMinimum  bool
-	AdditionalItems   *Schema
-	PatternProperties []*patternProperty
+	Type PrimitiveType
 
 	value   interface{}
 	errors  []error

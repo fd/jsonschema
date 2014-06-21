@@ -18,11 +18,12 @@ type uniqueItemsValidator struct {
 	unique bool
 }
 
-func (v *uniqueItemsValidator) Setup(x interface{}, builder Builder) error {
-	if y, ok := x.(bool); ok && y {
-		v.unique = true
+func (v *uniqueItemsValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("uniqueItems"); found {
+		if y, ok := x.(bool); ok && y {
+			v.unique = true
+		}
 	}
-
 	return nil
 }
 

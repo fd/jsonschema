@@ -19,22 +19,24 @@ type multipleOfValidator struct {
 	factor float64
 }
 
-func (v *multipleOfValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.(json.Number)
-	if !ok {
-		return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)
-	}
+func (v *multipleOfValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("multipleOf"); found {
+		y, ok := x.(json.Number)
+		if !ok {
+			return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)
+		}
 
-	f, err := y.Float64()
-	if err != nil {
-		return fmt.Errorf("invalid 'multipleOf' definition: %#v (%s)", x, err)
-	}
+		f, err := y.Float64()
+		if err != nil {
+			return fmt.Errorf("invalid 'multipleOf' definition: %#v (%s)", x, err)
+		}
 
-	if f < math.SmallestNonzeroFloat64 {
-		return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)
-	}
+		if f < math.SmallestNonzeroFloat64 {
+			return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)
+		}
 
-	v.factor = f
+		v.factor = f
+	}
 	return nil
 }
 

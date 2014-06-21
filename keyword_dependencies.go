@@ -23,39 +23,41 @@ type dependenciesValidator struct {
 	dependencies map[string]interface{}
 }
 
-func (v *dependenciesValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.(map[string]interface{})
-	if !ok || y == nil {
-		return fmt.Errorf("invalid 'dependencies' definition: %#v", x)
-	}
-
-	dependencies := make(map[string]interface{}, len(y))
-	for dependant, a := range y {
-		switch b := a.(type) {
-		case []interface{}:
-			deps := make([]string, len(b))
-			for i, d := range b {
-				if e, ok := d.(string); ok {
-					deps[i] = e
-				} else {
-					return fmt.Errorf("invalid 'dependencies' definition: %#v", x)
-				}
-			}
-			dependencies[dependant] = deps
-
-		case map[string]interface{}:
-			schema, err := builder.Build("/dependencies/"+escapeJSONPointer(dependant), b)
-			if err != nil {
-				return err
-			}
-			dependencies[dependant] = schema
-
-		default:
+func (v *dependenciesValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("dependencies"); found {
+		y, ok := x.(map[string]interface{})
+		if !ok || y == nil {
 			return fmt.Errorf("invalid 'dependencies' definition: %#v", x)
 		}
-	}
 
-	v.dependencies = dependencies
+		dependencies := make(map[string]interface{}, len(y))
+		for dependant, a := range y {
+			switch b := a.(type) {
+			case []interface{}:
+				deps := make([]string, len(b))
+				for i, d := range b {
+					if e, ok := d.(string); ok {
+						deps[i] = e
+					} else {
+						return fmt.Errorf("invalid 'dependencies' definition: %#v", x)
+					}
+				}
+				dependencies[dependant] = deps
+
+			case map[string]interface{}:
+				schema, err := builder.Build("/dependencies/"+escapeJSONPointer(dependant), b)
+				if err != nil {
+					return err
+				}
+				dependencies[dependant] = schema
+
+			default:
+				return fmt.Errorf("invalid 'dependencies' definition: %#v", x)
+			}
+		}
+
+		v.dependencies = dependencies
+	}
 	return nil
 }
 

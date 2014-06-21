@@ -17,8 +17,12 @@ type Schema struct {
 }
 
 type Validator interface {
-	Setup(x interface{}, b Builder) error
+	Setup(b Builder) error
 	Validate(interface{}, *Context)
+}
+
+type FormatValidator interface {
+	IsValid(interface{}) bool
 }
 
 func (s *Schema) Validate(v interface{}) error {
@@ -53,7 +57,7 @@ type InvalidDocumentError struct {
 
 func (e *InvalidDocumentError) Error() string {
 	var buf bytes.Buffer
-	fmt.Fprint(&buf, "Schema errors:")
+	fmt.Fprintf(&buf, "Schema errors (%s):", normalizeRef(e.Schema.Id.String()))
 	for _, err := range e.Errors {
 		s := strings.Replace(err.Error(), "\n", "\n  ", -1)
 		fmt.Fprintf(&buf, "\n- %s", s)

@@ -20,21 +20,35 @@ func (e *ErrTooLarge) Error() string {
 }
 
 type maximumValidator struct {
-	max float64
+	max       float64
+	exclusive bool
 }
 
-func (v *maximumValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.(json.Number)
-	if !ok {
-		return fmt.Errorf("invalid 'maximum' definition: %#v", x)
+func (v *maximumValidator) Setup(builder Builder) error {
+	if x, ok := builder.GetKeyword("exclusiveMaximum"); ok {
+		y, ok := x.(bool)
+
+		if !ok {
+			return fmt.Errorf("invalid 'exclusiveMaximum' definition: %#v", x)
+		}
+
+		v.exclusive = y
 	}
 
-	f, err := y.Float64()
-	if err != nil {
-		return fmt.Errorf("invalid 'maximum' definition: %#v (%s)", x, err)
+	if x, found := builder.GetKeyword("maximum"); found {
+		y, ok := x.(json.Number)
+		if !ok {
+			return fmt.Errorf("invalid 'maximum' definition: %#v", x)
+		}
+
+		f, err := y.Float64()
+		if err != nil {
+			return fmt.Errorf("invalid 'maximum' definition: %#v (%s)", x, err)
+		}
+
+		v.max = f
 	}
 
-	v.max = f
 	return nil
 }
 
@@ -50,13 +64,13 @@ func (v *maximumValidator) Validate(x interface{}, ctx *Context) {
 		return
 	}
 
-	if ctx.ExclusiveMaximum {
+	if v.exclusive {
 		ok = f < v.max
 	} else {
 		ok = f <= v.max
 	}
 
 	if !ok {
-		ctx.Report(&ErrTooLarge{v.max, ctx.ExclusiveMaximum, x})
+		ctx.Report(&ErrTooLarge{v.max, v.exclusive, x})
 	}
 }

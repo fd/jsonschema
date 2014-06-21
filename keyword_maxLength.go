@@ -19,18 +19,20 @@ type maxLengthValidator struct {
 	max int
 }
 
-func (v *maxLengthValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.(json.Number)
-	if !ok {
-		return fmt.Errorf("invalid 'maxLength' definition: %#v", x)
-	}
+func (v *maxLengthValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("maxLength"); found {
+		y, ok := x.(json.Number)
+		if !ok {
+			return fmt.Errorf("invalid 'maxLength' definition: %#v", x)
+		}
 
-	i, err := y.Int64()
-	if err != nil {
-		return fmt.Errorf("invalid 'maxLength' definition: %#v (%s)", x, err)
-	}
+		i, err := y.Int64()
+		if err != nil {
+			return fmt.Errorf("invalid 'maxLength' definition: %#v (%s)", x, err)
+		}
 
-	v.max = int(i)
+		v.max = int(i)
+	}
 	return nil
 }
 

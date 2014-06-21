@@ -17,13 +17,15 @@ type enumValidator struct {
 	enum []interface{}
 }
 
-func (v *enumValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.([]interface{})
-	if !ok || y == nil || len(y) == 0 {
-		return fmt.Errorf("invalid 'enum' definition: %#v", x)
-	}
+func (v *enumValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("enum"); found {
+		y, ok := x.([]interface{})
+		if !ok || y == nil || len(y) == 0 {
+			return fmt.Errorf("invalid 'enum' definition: %#v", x)
+		}
 
-	v.enum = y
+		v.enum = y
+	}
 	return nil
 }
 

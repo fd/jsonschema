@@ -18,39 +18,40 @@ type typeValidator struct {
 	expects []PrimitiveType
 }
 
-func (v *typeValidator) Setup(x interface{}, builder Builder) error {
-	switch y := x.(type) {
-	case string:
-		v.expects = []PrimitiveType{PrimitiveType(y)}
+func (v *typeValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("type"); found {
+		switch y := x.(type) {
+		case string:
+			v.expects = []PrimitiveType{PrimitiveType(y)}
 
-	case []string:
-		var z = make([]PrimitiveType, len(y))
-		for i, a := range y {
-			z[i] = PrimitiveType(a)
+		case []string:
+			var z = make([]PrimitiveType, len(y))
+			for i, a := range y {
+				z[i] = PrimitiveType(a)
+			}
+			v.expects = z
+
+		case []interface{}:
+			var z = make([]PrimitiveType, len(y))
+			for i, a := range y {
+				if b, ok := a.(string); ok {
+					z[i] = PrimitiveType(b)
+				} else {
+					return fmt.Errorf("invalid type expectation: %#v", x)
+				}
+			}
+			v.expects = z
+
+		default:
+			return fmt.Errorf("invalid type expectation: %#v", x)
 		}
-		v.expects = z
 
-	case []interface{}:
-		var z = make([]PrimitiveType, len(y))
-		for i, a := range y {
-			if b, ok := a.(string); ok {
-				z[i] = PrimitiveType(b)
-			} else {
-				return fmt.Errorf("invalid type expectation: %#v", x)
+		for _, t := range v.expects {
+			if !t.Valid() {
+				return fmt.Errorf("invalid type expectation: %#v", t)
 			}
 		}
-		v.expects = z
-
-	default:
-		return fmt.Errorf("invalid type expectation: %#v", x)
 	}
-
-	for _, t := range v.expects {
-		if !t.Valid() {
-			return fmt.Errorf("invalid type expectation: %#v", t)
-		}
-	}
-
 	return nil
 }
 

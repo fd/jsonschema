@@ -4,40 +4,45 @@ var RootEnv = NewEnv()
 
 func init() {
 	// any
-	RootEnv.RegisterKeyword("type", 100, &typeValidator{})
-	RootEnv.RegisterKeyword("enum", 101, &enumValidator{})
-	RootEnv.RegisterKeyword("anyOf", 102, &anyOfValidator{})
-	RootEnv.RegisterKeyword("allOf", 103, &allOfValidator{})
-	RootEnv.RegisterKeyword("oneOf", 104, &oneOfValidator{})
-	RootEnv.RegisterKeyword("not", 105, &notValidator{})
-	RootEnv.RegisterKeyword("definitions", 106, &definitionsValidator{})
+	RootEnv.RegisterKeyword(&typeValidator{}, 100, "type")
+	RootEnv.RegisterKeyword(&enumValidator{}, 101, "enum")
+	RootEnv.RegisterKeyword(&anyOfValidator{}, 102, "anyOf")
+	RootEnv.RegisterKeyword(&allOfValidator{}, 103, "allOf")
+	RootEnv.RegisterKeyword(&oneOfValidator{}, 104, "oneOf")
+	RootEnv.RegisterKeyword(&notValidator{}, 105, "not")
+	RootEnv.RegisterKeyword(&definitionsValidator{}, 106, "definitions")
+	RootEnv.RegisterKeyword(&formatValidator{}, 107, "format")
 
 	// numbers
-	RootEnv.RegisterKeyword("multipleOf", 200, &multipleOfValidator{})
-	RootEnv.RegisterKeyword("exclusiveMaximum", 201, &exclusiveMaximumValidator{})
-	RootEnv.RegisterKeyword("exclusiveMinimum", 202, &exclusiveMinimumValidator{})
-	RootEnv.RegisterKeyword("maximum", 203, &maximumValidator{})
-	RootEnv.RegisterKeyword("minimum", 204, &minimumValidator{})
+	RootEnv.RegisterKeyword(&multipleOfValidator{}, 200, "multipleOf")
+	RootEnv.RegisterKeyword(&maximumValidator{}, 201, "maximum", "exclusiveMaximum")
+	RootEnv.RegisterKeyword(&minimumValidator{}, 202, "minimum", "exclusiveMinimum")
 
 	// strings
-	RootEnv.RegisterKeyword("maxLength", 300, &maxLengthValidator{})
-	RootEnv.RegisterKeyword("minLength", 301, &minLengthValidator{})
-	RootEnv.RegisterKeyword("pattern", 302, &patternValidator{})
+	RootEnv.RegisterKeyword(&maxLengthValidator{}, 300, "maxLength")
+	RootEnv.RegisterKeyword(&minLengthValidator{}, 301, "minLength")
+	RootEnv.RegisterKeyword(&patternValidator{}, 302, "pattern")
 
 	// arrays
-	RootEnv.RegisterKeyword("additionalItems", 400, &additionalItemsValidator{})
-	RootEnv.RegisterKeyword("items", 401, &itemsValidator{})
-	RootEnv.RegisterKeyword("maxItems", 402, &maxItemsValidator{})
-	RootEnv.RegisterKeyword("minItems", 403, &minItemsValidator{})
-	RootEnv.RegisterKeyword("uniqueItems", 404, &uniqueItemsValidator{})
+	RootEnv.RegisterKeyword(&itemsValidator{}, 400, "items", "additionalItems")
+	RootEnv.RegisterKeyword(&maxItemsValidator{}, 401, "maxItems")
+	RootEnv.RegisterKeyword(&minItemsValidator{}, 402, "minItems")
+	RootEnv.RegisterKeyword(&uniqueItemsValidator{}, 403, "uniqueItems")
 
 	// objects
-	RootEnv.RegisterKeyword("maxProperties", 500, &maxPropertiesValidator{})
-	RootEnv.RegisterKeyword("minProperties", 501, &minPropertiesValidator{})
-	RootEnv.RegisterKeyword("required", 502, &requiredValidator{})
-	RootEnv.RegisterKeyword("patternProperties", 503, &patternPropertiesValidator{})
-	RootEnv.RegisterKeyword("properties", 504, &propertiesValidator{})
-	RootEnv.RegisterKeyword("dependencies", 505, &dependenciesValidator{})
+	RootEnv.RegisterKeyword(&maxPropertiesValidator{}, 500, "maxProperties")
+	RootEnv.RegisterKeyword(&minPropertiesValidator{}, 501, "minProperties")
+	RootEnv.RegisterKeyword(&requiredValidator{}, 502, "required")
+	RootEnv.RegisterKeyword(&propertiesValidator{}, 503, "properties", "patternProperties")
+	RootEnv.RegisterKeyword(&dependenciesValidator{}, 504, "dependencies")
+
+	RootEnv.RegisterFormat("date-time", &datetimeFormat{})
+	RootEnv.RegisterFormat("email", &emailFormat{})
+	RootEnv.RegisterFormat("hostname", &hostnameFormat{})
+	RootEnv.RegisterFormat("ipv4", &ipv4Format{})
+	RootEnv.RegisterFormat("ipv6", &ipv6Format{})
+	RootEnv.RegisterFormat("regex", &regexFormat{})
+	RootEnv.RegisterFormat("uri", &uriFormat{})
 
 	// Set the root Schema
 	schema, err := RootEnv.RegisterSchema("", draft4)

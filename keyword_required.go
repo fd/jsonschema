@@ -16,27 +16,28 @@ type requiredValidator struct {
 	required []string
 }
 
-func (v *requiredValidator) Setup(x interface{}, builder Builder) error {
-	switch y := x.(type) {
+func (v *requiredValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("required"); found {
+		switch y := x.(type) {
 
-	case []string:
-		v.required = y
+		case []string:
+			v.required = y
 
-	case []interface{}:
-		var z = make([]string, len(y))
-		for i, a := range y {
-			if b, ok := a.(string); ok {
-				z[i] = b
-			} else {
-				return fmt.Errorf("invalid 'required' definition: %#v", x)
+		case []interface{}:
+			var z = make([]string, len(y))
+			for i, a := range y {
+				if b, ok := a.(string); ok {
+					z[i] = b
+				} else {
+					return fmt.Errorf("invalid 'required' definition: %#v", x)
+				}
 			}
+			v.required = z
+
+		default:
+			return fmt.Errorf("invalid 'required' definition: %#v", x)
 		}
-		v.required = z
-
-	default:
-		return fmt.Errorf("invalid 'required' definition: %#v", x)
 	}
-
 	return nil
 }
 

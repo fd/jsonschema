@@ -37,28 +37,30 @@ type anyOfValidator struct {
 	schemas []*Schema
 }
 
-func (v *anyOfValidator) Setup(x interface{}, builder Builder) error {
-	y, ok := x.([]interface{})
-	if !ok || y == nil {
-		return fmt.Errorf("invalid 'anyOf' definition: %#v", x)
-	}
-
-	schemas := make([]*Schema, len(y))
-	for i, a := range y {
-		b, ok := a.(map[string]interface{})
-		if !ok {
+func (v *anyOfValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("anyOf"); found {
+		y, ok := x.([]interface{})
+		if !ok || y == nil {
 			return fmt.Errorf("invalid 'anyOf' definition: %#v", x)
 		}
 
-		schema, err := builder.Build(fmt.Sprintf("/anyOf/%d", i), b)
-		if err != nil {
-			return err
+		schemas := make([]*Schema, len(y))
+		for i, a := range y {
+			b, ok := a.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("invalid 'anyOf' definition: %#v", x)
+			}
+
+			schema, err := builder.Build(fmt.Sprintf("/anyOf/%d", i), b)
+			if err != nil {
+				return err
+			}
+
+			schemas[i] = schema
 		}
 
-		schemas[i] = schema
+		v.schemas = schemas
 	}
-
-	v.schemas = schemas
 	return nil
 }
 

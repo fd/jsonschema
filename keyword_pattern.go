@@ -19,18 +19,22 @@ type patternValidator struct {
 	regexp  *regexp.Regexp
 }
 
-func (v *patternValidator) Setup(x interface{}, builder Builder) error {
-	if y, ok := x.(string); ok {
-		r, err := regexp.Compile(y)
-		if err != nil {
-			return fmt.Errorf("invalid 'pattern' definition: %#v (error: %s)", x, err)
+func (v *patternValidator) Setup(builder Builder) error {
+	if x, found := builder.GetKeyword("pattern"); found {
+		if y, ok := x.(string); ok {
+			r, err := regexp.Compile(y)
+			if err != nil {
+				return fmt.Errorf("invalid 'pattern' definition: %#v (error: %s)", x, err)
+			}
+			v.pattern = y
+			v.regexp = r
+			return nil
 		}
-		v.pattern = y
-		v.regexp = r
-		return nil
+
+		return fmt.Errorf("invalid 'pattern' definition: %#v", x)
 	}
 
-	return fmt.Errorf("invalid 'pattern' definition: %#v", x)
+	return nil
 }
 
 func (v *patternValidator) Validate(x interface{}, ctx *Context) {

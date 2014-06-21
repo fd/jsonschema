@@ -5,38 +5,58 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 )
 
 type Env struct {
 	// schema definition for schemas that can be interpreted by this environment
 	SchemaSchema *Schema
 
-	schemas  map[string]*Schema
-	keywords map[string]keyword
+	schemas    map[string]*Schema
+	validators map[string]*validator
+	formats    map[string]FormatValidator
 }
 
-type keyword struct {
-	keyword   string
+type validator struct {
+	keywords  []string
 	priority  int
 	prototype reflect.Type
 }
 
 func NewEnv() *Env {
 	return &Env{
-		schemas:  map[string]*Schema{},
-		keywords: map[string]keyword{},
+		schemas:    map[string]*Schema{},
+		validators: map[string]*validator{},
+		formats:    map[string]FormatValidator{},
 	}
 }
 
-func (e *Env) RegisterKeyword(key string, priority int, v Validator) {
-	if _, found := e.keywords[key]; found {
-		panic("keyword is already registered")
+func (e *Env) RegisterKeyword(v Validator, priority int, key string, additionalKeys ...string) {
+	keys := append(additionalKeys, key)
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		if _, found := e.validators[key]; found {
+			panic("keyword is already registered")
+		}
 	}
+
 	rt := reflect.TypeOf(v)
 	if rt.Kind() != reflect.Ptr {
 		panic("Validator must be a pointer")
 	}
-	e.keywords[key] = keyword{key, priority, rt.Elem()}
+
+	validator := &validator{keys, priority, rt.Elem()}
+	for _, key := range keys {
+		e.validators[key] = validator
+	}
+}
+
+func (e *Env) RegisterFormat(key string, v FormatValidator) {
+	if _, found := e.formats[key]; found {
+		panic("format is already registered")
+	}
+	e.formats[key] = v
 }
 
 func (e *Env) RegisterSchema(id string, data []byte) (*Schema, error) {
@@ -45,7 +65,7 @@ func (e *Env) RegisterSchema(id string, data []byte) (*Schema, error) {
 		return nil, err
 	}
 
-	e.schemas[schema.Id.String()] = schema
+	e.schemas[normalizeRef(schema.Id.String())] = schema
 	return schema, nil
 }
 
