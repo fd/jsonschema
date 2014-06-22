@@ -184,14 +184,21 @@ func (b *builder) resolve() error {
 		refSchema, found := b.references[ref]
 		if found && refSchema != nil {
 			schema.RefSchema = refSchema
-			// fmt.Printf("%q => %q\n", normalizeRef(schema.Id.String()), normalizeRef(refSchema.Id.String()))
 			continue
 		}
 
 		refSchema, found = b.env.schemas[ref]
 		if found && refSchema != nil {
 			schema.RefSchema = refSchema
-			// fmt.Printf("%q => %q\n", normalizeRef(schema.Id.String()), normalizeRef(refSchema.Id.String()))
+			continue
+		}
+
+		refSchema, err := b.env.loadRemoteSchema(ref)
+		if err != nil {
+			return err
+		}
+		if refSchema != nil {
+			schema.RefSchema = refSchema
 			continue
 		}
 

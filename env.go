@@ -12,9 +12,15 @@ type Env struct {
 	// schema definition for schemas that can be interpreted by this environment
 	SchemaSchema *Schema
 
+	Transport Transport
+
 	schemas    map[string]*Schema
 	validators map[string]*validator
 	formats    map[string]FormatValidator
+}
+
+type Transport interface {
+	Get(url string) ([]byte, error)
 }
 
 type validator struct {
@@ -28,6 +34,32 @@ func NewEnv() *Env {
 		schemas:    map[string]*Schema{},
 		validators: map[string]*validator{},
 		formats:    map[string]FormatValidator{},
+	}
+}
+
+func (e *Env) Clone() *Env {
+
+	schemas := make(map[string]*Schema, len(e.schemas))
+	for k, v := range e.schemas {
+		schemas[k] = v
+	}
+
+	validators := make(map[string]*validator, len(e.validators))
+	for k, v := range e.validators {
+		validators[k] = v
+	}
+
+	formats := make(map[string]FormatValidator, len(e.formats))
+	for k, v := range e.formats {
+		formats[k] = v
+	}
+
+	return &Env{
+		e.SchemaSchema,
+		e.Transport,
+		schemas,
+		validators,
+		formats,
 	}
 }
 
@@ -104,4 +136,17 @@ func (e *Env) BuildSchema(id string, data []byte) (*Schema, error) {
 	}
 
 	return schema, nil
+}
+
+func (e *Env) loadRemoteSchema(url string) (*Schema, error) {
+	if e.Transport == nil {
+		return nil, fmt.Errorf("remote schema loading is not enabled (missing transport)")
+	}
+
+	data, err := e.Transport.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.RegisterSchema("", data)
 }

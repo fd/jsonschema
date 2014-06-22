@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net/url"
+	"path"
 	"testing"
 )
 
@@ -95,10 +97,13 @@ func run_test_suite(t *testing.T, path string) {
 		failed int
 	)
 
+	env := RootEnv.Clone()
+	env.Transport = &testTransport{}
+
 	for _, group := range suite {
 		t.Logf("  - %s:", group.Description)
 
-		schema, err := RootEnv.BuildSchema("", group.SchemaDef)
+		schema, err := env.BuildSchema("", group.SchemaDef)
 		if err != nil {
 			failed++
 			t.Errorf("    error: %s", err)
@@ -130,4 +135,20 @@ func run_test_suite(t *testing.T, path string) {
 	} else {
 		t.Logf("(\x1B[32mpassed: %d\x1B[0m)", passed)
 	}
+}
+
+type testTransport struct{}
+
+func (t *testTransport) Get(rawurl string) ([]byte, error) {
+	u, err := url.Parse(rawurl)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadFile(path.Join("testdata/draft4/remotes", u.Path))
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
