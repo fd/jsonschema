@@ -96,6 +96,14 @@ func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, erro
 	b.stack = append(b.stack, frame)
 	defer func() { b.stack = b.stack[:len(b.stack)-1] }()
 
+	{
+		root := b.stack[0].schema
+		if root.Subschemas == nil {
+			root.Subschemas = make(map[string]*Schema)
+		}
+		root.Subschemas[inlineId.Fragment] = frame.schema
+	}
+
 	if refstr, ok := isRef(v); ok {
 		ref, err := url.Parse(refstr)
 		if err != nil {
@@ -193,11 +201,12 @@ func (b *builder) resolve() error {
 			continue
 		}
 
-		refSchema, err := b.env.loadRemoteSchema(ref)
+		rootSchema, err := b.env.loadRemoteSchema(ref)
 		if err != nil {
 			return err
 		}
-		if refSchema != nil {
+		refSchema, found = rootSchema.Subschemas[schema.Ref.Fragment]
+		if found && refSchema != nil {
 			schema.RefSchema = refSchema
 			continue
 		}

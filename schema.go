@@ -14,6 +14,7 @@ type Schema struct {
 	RefSchema  *Schema
 	Validators []Validator
 	Definition map[string]interface{}
+	Subschemas map[string]*Schema
 }
 
 type Validator interface {
