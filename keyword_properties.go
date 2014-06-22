@@ -111,51 +111,37 @@ func (v *propertiesValidator) Validate(x interface{}, ctx *Context) {
 		return
 	}
 
-	var pending = make(map[string]interface{}, len(y))
 	for k, m := range y {
-		pending[k] = m
-	}
+		additional := true
 
-	// properties
-	for k, schema := range v.properties {
-		if m, found := pending[k]; found {
-			delete(pending, k)
-
+		if schema, found := v.properties[k]; found {
+			additional = false
 			err := schema.Validate(m)
 			if err != nil {
 				ctx.Report(&ErrInvalidProperty{k, err})
 			}
 		}
-	}
 
-	// patternProperties
-	for _, pattern := range v.patterns {
-		for k, m := range pending {
+		for _, pattern := range v.patterns {
 			if pattern.regexp.MatchString(k) {
-				delete(pending, k)
-
+				additional = false
 				err := pattern.schema.Validate(m)
 				if err != nil {
 					ctx.Report(&ErrInvalidProperty{k, err})
 				}
 			}
 		}
-	}
 
-	// additionalProperties
-	if v.additionalProperties == additionalPropertiesDenied {
-		for k := range pending {
-			ctx.Report(&ErrInvalidProperty{k, fmt.Errorf("additional property is not allowed")})
-		}
-
-	} else if v.additionalProperties != nil {
-		for k, m := range pending {
-			err := v.additionalProperties.Validate(m)
-			if err != nil {
-				ctx.Report(&ErrInvalidProperty{k, err})
+		if additional {
+			if v.additionalProperties == additionalPropertiesDenied {
+				ctx.Report(&ErrInvalidProperty{k, fmt.Errorf("additional property is not allowed")})
+			} else if v.additionalProperties != nil {
+				err := v.additionalProperties.Validate(m)
+				if err != nil {
+					ctx.Report(&ErrInvalidProperty{k, err})
+				}
 			}
 		}
 
 	}
-
 }

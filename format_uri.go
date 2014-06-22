@@ -14,6 +14,30 @@ func (*uriFormat) IsValid(x interface{}) bool {
 	}
 
 	u, err := url.Parse(s)
+	if err != nil {
+		return false
+	}
+
+	for i, l := 0, len(u.Path); i < l; i++ {
+		c := u.Path[i]
+		if 'a' <= c && c <= 'z' {
+			continue
+		}
+		if 'A' <= c && c <= 'Z' {
+			continue
+		}
+		if '0' <= c && c <= '9' {
+			continue
+		}
+		if '-' == c || '.' == c || '_' == c || '~' == c || '!' == c ||
+			'$' == c || '&' == c || '\'' == c || '(' == c || ')' == c ||
+			'*' == c || '+' == c || ',' == c || ';' == c || '=' == c ||
+			':' == c || '@' == c || '%' == c || '/' == c {
+			continue
+		}
+		return false
+	}
+
 	fmt.Printf("url=%#v\n", u)
-	return err == nil
+	return true
 }

@@ -62,7 +62,7 @@ func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, erro
 			}
 
 			if base != nil {
-				id = base.ResolveReference(id)
+				id = resolveRef(base, id)
 			}
 		}
 
@@ -76,7 +76,7 @@ func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, erro
 			}
 
 			if base != nil {
-				inlineId = base.ResolveReference(inlineId)
+				inlineId = resolveRef(base, inlineId)
 			}
 		}
 
@@ -89,30 +89,38 @@ func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, erro
 		b.references[normalizeRef(inlineId.String())] = schema
 	}
 
-	if refstr, ok := isRef(v); ok {
-		ref, err := url.Parse(refstr)
-		if err != nil {
-			return nil, err
-		}
-
-		fragment := ref.Fragment
-
-		if base != nil {
-			ref = base.ResolveReference(ref)
-		}
-
-		ref.Fragment = fragment
-
-		schema.Ref = ref
-		return schema, nil
-	}
-
 	frame := &builderStackFrame{
 		schema:   schema,
 		keywords: make(map[string]bool, len(v)),
 	}
 	b.stack = append(b.stack, frame)
 	defer func() { b.stack = b.stack[:len(b.stack)-1] }()
+
+	if refstr, ok := isRef(v); ok {
+		ref, err := url.Parse(refstr)
+		if err != nil {
+			return nil, err
+		}
+
+		if base != nil {
+			ref = resolveRef(base, ref)
+		}
+
+		schema.Ref = ref
+
+		for k, x := range v {
+			if k != "$ref" {
+				if y, ok := x.(map[string]interface{}); ok && y != nil {
+					_, err := b.Build("/"+escapeJSONPointer(k), y)
+					if err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
+
+		return schema, nil
+	}
 
 	validators = map[int]Validator{}
 	schema.Definition = v

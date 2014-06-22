@@ -3,6 +3,7 @@ package jsonschema
 import (
 	"encoding/json"
 	"math"
+	"net/url"
 	"reflect"
 	"strings"
 )
@@ -66,4 +67,10 @@ func normalizeRef(r string) string {
 		r += "#"
 	}
 	return r
+}
+
+func resolveRef(base, ref *url.URL) *url.URL {
+	dst := base.ResolveReference(ref)
+	dst.Fragment = ref.Fragment
+	return dst
 }

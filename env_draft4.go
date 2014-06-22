@@ -33,7 +33,7 @@ func init() {
 	RootEnv.RegisterKeyword(&maxPropertiesValidator{}, 500, "maxProperties")
 	RootEnv.RegisterKeyword(&minPropertiesValidator{}, 501, "minProperties")
 	RootEnv.RegisterKeyword(&requiredValidator{}, 502, "required")
-	RootEnv.RegisterKeyword(&propertiesValidator{}, 503, "properties", "patternProperties")
+	RootEnv.RegisterKeyword(&propertiesValidator{}, 503, "properties", "patternProperties", "additionalProperties")
 	RootEnv.RegisterKeyword(&dependenciesValidator{}, 504, "dependencies")
 
 	RootEnv.RegisterFormat("date-time", &datetimeFormat{})

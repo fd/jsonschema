@@ -23,7 +23,6 @@ func TestCoreIdenitySchema(t *testing.T) {
 }
 
 func TestDraft4(t *testing.T) {
-
 	run_test_suite(t, "draft4/additionalItems.json")
 	run_test_suite(t, "draft4/additionalProperties.json")
 	run_test_suite(t, "draft4/allOf.json")
@@ -51,11 +50,12 @@ func TestDraft4(t *testing.T) {
 	run_test_suite(t, "draft4/required.json")
 	run_test_suite(t, "draft4/type.json")
 	run_test_suite(t, "draft4/uniqueItems.json")
+}
 
+func TestDraft4Optional(t *testing.T) {
 	run_test_suite(t, "draft4/optional/bignum.json")
 	run_test_suite(t, "draft4/optional/format.json")
 	run_test_suite(t, "draft4/optional/zeroTerminatedFloats.json")
-
 }
 
 func load_test_data(path string) []byte {
