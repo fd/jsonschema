@@ -189,26 +189,36 @@ func (b *builder) resolve() error {
 
 		ref := normalizeRef(schema.Ref.String())
 
+		// inline
 		refSchema, found := b.references[ref]
+		// fmt.Printf("GET inline-ref = %q (%v)\n", ref, found)
 		if found && refSchema != nil {
 			schema.RefSchema = refSchema
 			continue
 		}
 
-		refSchema, found = b.env.schemas[ref]
-		if found && refSchema != nil {
-			schema.RefSchema = refSchema
-			continue
+		// cached
+		rootSchema, found := b.env.schemas[rootRef(ref)]
+		// fmt.Printf("GET remote-ref = %q (%v) %q %q\n", ref, found, rootRef(ref), refFragment(ref))
+		if found && rootSchema != nil {
+			refSchema, found = rootSchema.Subschemas[refFragment(ref)]
+			if found && refSchema != nil {
+				schema.RefSchema = refSchema
+				continue
+			}
 		}
 
-		rootSchema, err := b.env.loadRemoteSchema(ref)
+		// remote
+		rootSchema, err := b.env.loadRemoteSchema(refURL(ref))
+		// fmt.Printf("GET remote-ref = %q (%v) %q %q\n", ref, found, refURL(ref), refFragment(ref))
 		if err != nil {
 			return err
-		}
-		refSchema, found = rootSchema.Subschemas[schema.Ref.Fragment]
-		if found && refSchema != nil {
-			schema.RefSchema = refSchema
-			continue
+		} else {
+			refSchema, found = rootSchema.Subschemas[refFragment(ref)]
+			if found && refSchema != nil {
+				schema.RefSchema = refSchema
+				continue
+			}
 		}
 
 		return fmt.Errorf("unknown schema: %s", ref)

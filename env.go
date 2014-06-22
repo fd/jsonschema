@@ -9,9 +9,6 @@ import (
 )
 
 type Env struct {
-	// schema definition for schemas that can be interpreted by this environment
-	SchemaSchema *Schema
-
 	Transport Transport
 
 	schemas    map[string]*Schema
@@ -55,7 +52,6 @@ func (e *Env) Clone() *Env {
 	}
 
 	return &Env{
-		e.SchemaSchema,
 		e.Transport,
 		schemas,
 		validators,
@@ -103,7 +99,8 @@ func (e *Env) RegisterSchema(id string, data []byte) (*Schema, error) {
 
 func (e *Env) BuildSchema(id string, data []byte) (*Schema, error) {
 	var (
-		obj map[string]interface{}
+		obj         map[string]interface{}
+		superschema string
 	)
 
 	dec := json.NewDecoder(bytes.NewReader(data))
@@ -113,10 +110,20 @@ func (e *Env) BuildSchema(id string, data []byte) (*Schema, error) {
 		return nil, err
 	}
 
-	if e.SchemaSchema != nil {
-		err := e.SchemaSchema.Validate(obj)
-		if err != nil {
-			return nil, err
+	if v, ok := obj["$schema"].(string); ok {
+		superschema = normalizeRef(v)
+	}
+
+	if superschema == "" {
+		superschema = "http://json-schema.org/draft-04/schema#"
+	}
+
+	if r, found := e.schemas[rootRef(superschema)]; found {
+		if s, found := r.Subschemas[refFragment(superschema)]; found {
+			err := s.Validate(obj)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

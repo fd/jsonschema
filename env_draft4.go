@@ -54,8 +54,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	RootEnv.SchemaSchema = schema
 }
 
 var draft4 = []byte(`

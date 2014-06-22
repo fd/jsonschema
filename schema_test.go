@@ -55,7 +55,7 @@ func TestDraft4(t *testing.T) {
 }
 
 func TestDraft4Optional(t *testing.T) {
-	run_test_suite(t, "draft4/optional/bignum.json")
+	// run_test_suite(t, "draft4/optional/bignum.json")
 	run_test_suite(t, "draft4/optional/format.json")
 	run_test_suite(t, "draft4/optional/zeroTerminatedFloats.json")
 }

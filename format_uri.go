@@ -1,7 +1,6 @@
 package jsonschema
 
 import (
-	"fmt"
 	"net/url"
 )
 
@@ -38,6 +37,6 @@ func (*uriFormat) IsValid(x interface{}) bool {
 		return false
 	}
 
-	fmt.Printf("url=%#v\n", u)
+	// fmt.Printf("url=%#v\n", u)
 	return true
 }

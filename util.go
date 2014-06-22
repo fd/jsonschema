@@ -74,3 +74,21 @@ func resolveRef(base, ref *url.URL) *url.URL {
 	dst.Fragment = ref.Fragment
 	return dst
 }
+
+func rootRef(ref string) string {
+	ref = normalizeRef(ref)
+	idx := strings.IndexByte(ref, '#')
+	return ref[:idx+1]
+}
+
+func refURL(ref string) string {
+	ref = normalizeRef(ref)
+	idx := strings.IndexByte(ref, '#')
+	return ref[:idx]
+}
+
+func refFragment(ref string) string {
+	ref = normalizeRef(ref)
+	idx := strings.IndexByte(ref, '#')
+	return ref[idx+1:]
+}
