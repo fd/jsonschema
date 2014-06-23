@@ -11,14 +11,11 @@ import (
 func isEqual(a, b interface{}) (bool, error) {
 
 	// handle numbers mathematically
-	if n, ok := a.(json.Number); ok {
-		if m, ok := b.(json.Number); ok {
-			f, err := n.Float64()
-			if err != nil {
-				return false, err
-			}
-
-			g, err := m.Float64()
+	if f, ok, err := toFloat(a); ok {
+		if err != nil {
+			return false, err
+		}
+		if g, ok, err := toFloat(b); ok {
 			if err != nil {
 				return false, err
 			}
@@ -31,6 +28,28 @@ func isEqual(a, b interface{}) (bool, error) {
 	// other values
 	return reflect.DeepEqual(a, b), nil
 
+}
+
+func toFloat(x interface{}) (float64, bool, error) {
+	switch y := x.(type) {
+
+	case json.Number:
+		f, err := y.Float64()
+		if err != nil {
+			return 0, true, err
+		}
+		return f, true, nil
+
+	case int64:
+		return float64(y), true, nil
+
+	case float64:
+		return y, true, nil
+
+	default:
+		return 0, false, nil
+
+	}
 }
 
 func isRef(x interface{}) (string, bool) {

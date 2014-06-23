@@ -1,7 +1,6 @@
 package jsonschema
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 )
@@ -12,14 +11,9 @@ type multipleOfValidator struct {
 
 func (v *multipleOfValidator) Setup(builder Builder) error {
 	if x, found := builder.GetKeyword("multipleOf"); found {
-		y, ok := x.(json.Number)
+		f, ok := x.(float64)
 		if !ok {
 			return fmt.Errorf("invalid 'multipleOf' definition: %#v", x)
-		}
-
-		f, err := y.Float64()
-		if err != nil {
-			return fmt.Errorf("invalid 'multipleOf' definition: %#v (%s)", x, err)
 		}
 
 		if f < math.SmallestNonzeroFloat64 {
@@ -32,12 +26,10 @@ func (v *multipleOfValidator) Setup(builder Builder) error {
 }
 
 func (v *multipleOfValidator) Validate(x interface{}, ctx *Context) {
-	y, ok := x.(json.Number)
+	f, ok, err := toFloat(x)
 	if !ok {
 		return
 	}
-
-	f, err := y.Float64()
 	if err != nil {
 		ctx.Report(err)
 		return

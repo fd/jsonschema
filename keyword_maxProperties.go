@@ -1,7 +1,6 @@
 package jsonschema
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -11,14 +10,9 @@ type maxPropertiesValidator struct {
 
 func (v *maxPropertiesValidator) Setup(builder Builder) error {
 	if x, found := builder.GetKeyword("maxProperties"); found {
-		y, ok := x.(json.Number)
+		i, ok := x.(int64)
 		if !ok {
 			return fmt.Errorf("invalid 'maxProperties' definition: %#v", x)
-		}
-
-		i, err := y.Int64()
-		if err != nil {
-			return fmt.Errorf("invalid 'maxProperties' definition: %#v (%s)", x, err)
 		}
 
 		v.max = int(i)

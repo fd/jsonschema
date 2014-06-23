@@ -1,7 +1,6 @@
 package jsonschema
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -22,12 +21,10 @@ func (v *minimumValidator) Setup(builder Builder) error {
 	}
 
 	if x, found := builder.GetKeyword("minimum"); found {
-		y, ok := x.(json.Number)
+		f, ok, err := toFloat(x)
 		if !ok {
 			return fmt.Errorf("invalid 'minimum' definition: %#v", x)
 		}
-
-		f, err := y.Float64()
 		if err != nil {
 			return fmt.Errorf("invalid 'minimum' definition: %#v (%s)", x, err)
 		}
@@ -38,12 +35,10 @@ func (v *minimumValidator) Setup(builder Builder) error {
 }
 
 func (v *minimumValidator) Validate(x interface{}, ctx *Context) {
-	y, ok := x.(json.Number)
+	f, ok, err := toFloat(x)
 	if !ok {
 		return
 	}
-
-	f, err := y.Float64()
 	if err != nil {
 		ctx.Report(err)
 		return

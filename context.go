@@ -17,7 +17,7 @@ type contextStackFrame struct {
 
 func newContext() *Context {
 	return &Context{
-		stack: make([]contextStackFrame, 0, 16),
+		stack: make([]contextStackFrame, 0, 8),
 	}
 }
 
@@ -27,7 +27,13 @@ func (c *Context) Report(err error) {
 	frame.errors = append(frame.errors, err)
 }
 
-func (c *Context) ValidateValueWith(x interface{}, schema *Schema) error {
+func (c *Context) UpdateValue(x interface{}) {
+	l := len(c.stack)
+	frame := &c.stack[l-1]
+	frame.value = x
+}
+
+func (c *Context) ValidateValueWith(x interface{}, schema *Schema) (interface{}, error) {
 	l := len(c.stack)
 
 	if l == cap(c.stack) {
@@ -51,15 +57,15 @@ func (c *Context) ValidateValueWith(x interface{}, schema *Schema) error {
 		valueId = parentFrame.valueId + 1
 	}
 
+	// push stack frame
 	c.stack = append(c.stack, contextStackFrame{
 		valueId: valueId,
 		value:   x,
 		schema:  schema,
 	})
-	defer func() { c.stack = c.stack[:len(c.stack)-1] }()
 
 	for _, validator := range schema.Validators {
-		validator.Validate(x, c)
+		validator.Validate(c.stack[l].value, c)
 	}
 
 	frame := &c.stack[l]
@@ -67,10 +73,12 @@ func (c *Context) ValidateValueWith(x interface{}, schema *Schema) error {
 		err = &ErrInvalidInstance{schema, frame.errors}
 	}
 
-	return err
+	// pop stack frame
+	c.stack = c.stack[:len(c.stack)-1]
+	return frame.value, err
 }
 
-func (c *Context) ValidateSelfWith(schema *Schema) error {
+func (c *Context) ValidateSelfWith(schema *Schema) (interface{}, error) {
 	l := len(c.stack)
 
 	if l == cap(c.stack) {
@@ -80,7 +88,7 @@ func (c *Context) ValidateSelfWith(schema *Schema) error {
 	}
 
 	if l == 0 {
-		return fmt.Errorf("ValidateWith() cannot be a root frame")
+		return nil, fmt.Errorf("ValidateWith() cannot be a root frame")
 	}
 
 	if schema.RefSchema != nil {
@@ -90,7 +98,6 @@ func (c *Context) ValidateSelfWith(schema *Schema) error {
 	var (
 		err         error
 		parentFrame = &c.stack[l-1]
-		value       = parentFrame.value
 	)
 
 	for i := l - 1; i >= 0; i-- {
@@ -99,7 +106,7 @@ func (c *Context) ValidateSelfWith(schema *Schema) error {
 			break
 		}
 		if schema == frame.schema {
-			return fmt.Errorf("schema validation loops are invalid")
+			return nil, fmt.Errorf("schema validation loops are invalid")
 		}
 	}
 
@@ -111,7 +118,7 @@ func (c *Context) ValidateSelfWith(schema *Schema) error {
 	})
 
 	for _, validator := range schema.Validators {
-		validator.Validate(value, c)
+		validator.Validate(c.stack[l].value, c)
 	}
 
 	frame := &c.stack[l]
@@ -121,7 +128,7 @@ func (c *Context) ValidateSelfWith(schema *Schema) error {
 
 	// pop stack frame
 	c.stack = c.stack[:len(c.stack)-1]
-	return err
+	return frame.value, err
 }
 
 type PrimitiveType string

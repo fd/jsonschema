@@ -25,7 +25,8 @@ type FormatValidator interface {
 }
 
 func (s *Schema) Validate(v interface{}) error {
-	return newContext().ValidateValueWith(v, s)
+	_, err := newContext().ValidateValueWith(v, s)
+	return err
 }
 
 func (s *Schema) ValidateData(d []byte) error {

@@ -39,6 +39,10 @@ func (*hostnameFormat) IsValid(x interface{}) bool {
 			return false
 		}
 
+		if strings.HasPrefix(label, "xn--") {
+			label = label[4:]
+		}
+
 		last_i := len(label) - 1
 		for i, char := range label {
 			if 'a' <= char && char <= 'z' {

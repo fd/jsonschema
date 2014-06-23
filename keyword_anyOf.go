@@ -41,7 +41,7 @@ func (v *anyOfValidator) Validate(x interface{}, ctx *Context) {
 	)
 
 	for i, schema := range v.schemas {
-		err := ctx.ValidateSelfWith(schema)
+		_, err := ctx.ValidateSelfWith(schema)
 		if err == nil {
 			return
 		}

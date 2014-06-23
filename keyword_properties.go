@@ -107,18 +107,24 @@ func (v *propertiesValidator) Validate(x interface{}, ctx *Context) {
 
 		if schema, found := v.properties[k]; found {
 			additional = false
-			err := ctx.ValidateValueWith(m, schema)
+			newValue, err := ctx.ValidateValueWith(m, schema)
 			if err != nil {
 				ctx.Report(&ErrInvalidProperty{k, err})
+			} else {
+				m = newValue
+				y[k] = newValue
 			}
 		}
 
 		for _, pattern := range v.patterns {
 			if pattern.regexp.MatchString(k) {
 				additional = false
-				err := ctx.ValidateValueWith(m, pattern.schema)
+				newValue, err := ctx.ValidateValueWith(m, pattern.schema)
 				if err != nil {
 					ctx.Report(&ErrInvalidProperty{k, err})
+				} else {
+					m = newValue
+					y[k] = newValue
 				}
 			}
 		}
@@ -127,9 +133,12 @@ func (v *propertiesValidator) Validate(x interface{}, ctx *Context) {
 			if v.additionalProperties == additionalPropertiesDenied {
 				ctx.Report(&ErrInvalidProperty{k, fmt.Errorf("additional property is not allowed")})
 			} else if v.additionalProperties != nil {
-				err := ctx.ValidateValueWith(m, v.additionalProperties)
+				newValue, err := ctx.ValidateValueWith(m, v.additionalProperties)
 				if err != nil {
 					ctx.Report(&ErrInvalidProperty{k, err})
+				} else {
+					m = newValue
+					y[k] = newValue
 				}
 			}
 		}

@@ -1,7 +1,6 @@
 package jsonschema
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -22,12 +21,10 @@ func (v *maximumValidator) Setup(builder Builder) error {
 	}
 
 	if x, found := builder.GetKeyword("maximum"); found {
-		y, ok := x.(json.Number)
+		f, ok, err := toFloat(x)
 		if !ok {
 			return fmt.Errorf("invalid 'maximum' definition: %#v", x)
 		}
-
-		f, err := y.Float64()
 		if err != nil {
 			return fmt.Errorf("invalid 'maximum' definition: %#v (%s)", x, err)
 		}
@@ -39,12 +36,10 @@ func (v *maximumValidator) Setup(builder Builder) error {
 }
 
 func (v *maximumValidator) Validate(x interface{}, ctx *Context) {
-	y, ok := x.(json.Number)
+	f, ok, err := toFloat(x)
 	if !ok {
 		return
 	}
-
-	f, err := y.Float64()
 	if err != nil {
 		ctx.Report(err)
 		return

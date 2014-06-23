@@ -1,7 +1,6 @@
 package jsonschema
 
 import (
-	"encoding/json"
 	"fmt"
 	"unicode/utf8"
 )
@@ -12,14 +11,9 @@ type maxLengthValidator struct {
 
 func (v *maxLengthValidator) Setup(builder Builder) error {
 	if x, found := builder.GetKeyword("maxLength"); found {
-		y, ok := x.(json.Number)
+		i, ok := x.(int64)
 		if !ok {
 			return fmt.Errorf("invalid 'maxLength' definition: %#v", x)
-		}
-
-		i, err := y.Int64()
-		if err != nil {
-			return fmt.Errorf("invalid 'maxLength' definition: %#v (%s)", x, err)
 		}
 
 		v.max = int(i)

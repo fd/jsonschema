@@ -61,10 +61,14 @@ func (v *typeValidator) Validate(x interface{}, ctx *Context) {
 
 		case IntegerType:
 			if y, ok := x.(json.Number); ok {
-				_, err := y.Int64()
+				i, err := y.Int64()
 				if err == nil {
+					ctx.UpdateValue(i)
 					return
 				}
+			}
+			if _, ok := x.(int64); ok {
+				return
 			}
 
 		case NullType:
@@ -74,10 +78,18 @@ func (v *typeValidator) Validate(x interface{}, ctx *Context) {
 
 		case NumberType:
 			if y, ok := x.(json.Number); ok {
-				_, err := y.Float64()
+				f, err := y.Float64()
 				if err == nil {
+					ctx.UpdateValue(f)
 					return
 				}
+			}
+			if _, ok := x.(float64); ok {
+				return
+			}
+			if y, ok := x.(int64); ok {
+				ctx.UpdateValue(float64(y))
+				return
 			}
 
 		case ObjectType:

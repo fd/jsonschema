@@ -66,7 +66,7 @@ func (v *dependenciesValidator) Validate(x interface{}, ctx *Context) {
 			}
 
 		case *Schema:
-			err := ctx.ValidateValueWith(x, d)
+			_, err := ctx.ValidateValueWith(x, d)
 			if err != nil {
 				ctx.Report(&ErrInvalidDependency{Property: k, Schema: d, Err: err})
 			}

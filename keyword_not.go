@@ -26,7 +26,7 @@ func (v *notValidator) Setup(builder Builder) error {
 }
 
 func (v *notValidator) Validate(x interface{}, ctx *Context) {
-	err := ctx.ValidateSelfWith(v.schema)
+	_, err := ctx.ValidateSelfWith(v.schema)
 	if err == nil {
 		ctx.Report(&ErrNotNot{x, v.schema})
 	}

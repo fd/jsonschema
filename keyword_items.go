@@ -76,9 +76,11 @@ func (v *itemsValidator) Validate(x interface{}, ctx *Context) {
 
 	if v.item != nil {
 		for i, l := 0, len(y); i < l; i++ {
-			err := ctx.ValidateValueWith(y[i], v.item)
+			newValue, err := ctx.ValidateValueWith(y[i], v.item)
 			if err != nil {
 				ctx.Report(&ErrInvalidItem{i, err})
+			} else {
+				y[i] = newValue
 			}
 		}
 
@@ -95,9 +97,11 @@ func (v *itemsValidator) Validate(x interface{}, ctx *Context) {
 		)
 
 		for ; i < la && i < lb; i++ {
-			err := ctx.ValidateValueWith(y[i], v.items[i])
+			newValue, err := ctx.ValidateValueWith(y[i], v.items[i])
 			if err != nil {
 				ctx.Report(&ErrInvalidItem{i, err})
+			} else {
+				y[i] = newValue
 			}
 		}
 
@@ -108,9 +112,11 @@ func (v *itemsValidator) Validate(x interface{}, ctx *Context) {
 			}
 		} else if v.additionalItem != nil {
 			for ; i < la; i++ {
-				err := ctx.ValidateValueWith(y[i], v.additionalItem)
+				newValue, err := ctx.ValidateValueWith(y[i], v.additionalItem)
 				if err != nil {
 					ctx.Report(&ErrInvalidItem{i, err})
+				} else {
+					y[i] = newValue
 				}
 			}
 		}
