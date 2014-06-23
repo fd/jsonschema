@@ -1,0 +1,16 @@
+{
+  "fullName" : null,
+  "age" : -1,
+  "state" : 47,
+  "city" : false,
+  "zip" : [null],
+  "married" : "yes",
+  "dozen" : 50,
+  "dozenOrBakersDozen" : "over 9000",
+  "favoriteEvenNumber" : 15,
+  "topThreeFavoriteColors" : [ "red", 5 ],
+  "favoriteSingleDigitWholeNumbers" : [ 78, 2, 999 ],
+  "favoriteFiveLetterWord" : "codernaut",
+  "emailAddresses" : [],
+  "ipAddresses" : [ "999.0.099.1", "294.48.64.2346", false, "2221409.64214128.42414.235233", "124124.12412412" ]
+}

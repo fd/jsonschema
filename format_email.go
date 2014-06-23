@@ -16,9 +16,34 @@ func (f *emailFormat) IsValid(x interface{}) bool {
 		return true
 	}
 
-	idx := strings.IndexByte(s, '@')
-	if idx <= 0 {
+	if len(s) == 0 {
 		return false
+	}
+
+	idx := 0
+	if s[0] == '"' {
+		offset := 1
+		for {
+			i := strings.IndexByte(s[offset:], '"')
+			if i < 0 {
+				return false
+			}
+			offset += i + 1
+			if s[offset-2] != '\\' {
+				break
+			}
+		}
+
+		idx = strings.IndexByte(s[offset:], '@')
+		if idx != 0 {
+			return false
+		}
+		idx = offset + idx
+	} else {
+		idx = strings.IndexByte(s, '@')
+		if idx <= 0 {
+			return false
+		}
 	}
 
 	node := s[idx+1:]
