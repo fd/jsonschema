@@ -4,15 +4,6 @@ import (
 	"fmt"
 )
 
-type ErrInvalidEnum struct {
-	Expected []interface{}
-	Value    interface{}
-}
-
-func (e *ErrInvalidEnum) Error() string {
-	return fmt.Sprintf("%v must be in %v", e.Value, e.Expected)
-}
-
 type enumValidator struct {
 	enum []interface{}
 }

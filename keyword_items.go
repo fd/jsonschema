@@ -4,15 +4,6 @@ import (
 	"fmt"
 )
 
-type ErrInvalidItem struct {
-	Index int
-	Err   error
-}
-
-func (e *ErrInvalidItem) Error() string {
-	return fmt.Sprintf("Invalid item at %v: %s", e.Index, e.Err)
-}
-
 var additionalItemsDenied = &Schema{}
 
 type itemsValidator struct {

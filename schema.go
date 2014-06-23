@@ -3,9 +3,7 @@ package jsonschema
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/url"
-	"strings"
 )
 
 type Schema struct {
@@ -49,19 +47,4 @@ func (s *Schema) ValidateData(d []byte) error {
 	}
 
 	return s.Validate(v)
-}
-
-type InvalidDocumentError struct {
-	Schema *Schema
-	Errors []error
-}
-
-func (e *InvalidDocumentError) Error() string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "Schema errors (%s):", normalizeRef(e.Schema.Id.String()))
-	for _, err := range e.Errors {
-		s := strings.Replace(err.Error(), "\n", "\n  ", -1)
-		fmt.Fprintf(&buf, "\n- %s", s)
-	}
-	return buf.String()
 }

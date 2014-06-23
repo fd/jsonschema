@@ -5,15 +5,6 @@ import (
 	"fmt"
 )
 
-type ErrInvalidType struct {
-	expected []PrimitiveType
-	was      interface{}
-}
-
-func (e *ErrInvalidType) Error() string {
-	return fmt.Sprintf("expected type to be in %#v but was %#v", e.expected, e.was)
-}
-
 type typeValidator struct {
 	expects []PrimitiveType
 }

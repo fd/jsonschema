@@ -37,7 +37,7 @@ func (c *Context) ValidateWith(schema *Schema) error {
 	}
 
 	if len(ctx.errors) > 0 {
-		err = &InvalidDocumentError{schema, ctx.errors}
+		err = &ErrInvalidInstance{schema, ctx.errors}
 		c.results[id] = err
 	}
 

@@ -1,37 +1,8 @@
 package jsonschema
 
 import (
-	"bytes"
 	"fmt"
-	"strings"
 )
-
-type ErrNotOneOf struct {
-	Value   interface{}
-	Schemas []*Schema
-	Errors  []error
-}
-
-func (e *ErrNotOneOf) Error() string {
-	var buf bytes.Buffer
-
-	fmt.Fprintf(&buf, "value must be one of:")
-
-	for i, schema := range e.Schemas {
-		var (
-			err    = e.Errors[i]
-			errstr = "<nil>"
-		)
-
-		if err != nil {
-			errstr = strings.Replace(err.Error(), "\n", "\n    ", -1)
-		}
-
-		fmt.Fprintf(&buf, "\n- schema: %v\n  error:\n    %v", schema, errstr)
-	}
-
-	return buf.String()
-}
 
 type oneOfValidator struct {
 	schemas []*Schema

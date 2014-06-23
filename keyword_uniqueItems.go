@@ -1,19 +1,5 @@
 package jsonschema
 
-import (
-	"fmt"
-)
-
-type ErrNotUnique struct {
-	IndexA int
-	IndexB int
-	Value  interface{}
-}
-
-func (e *ErrNotUnique) Error() string {
-	return fmt.Sprintf("value at %d (%v) is not unique (repeated at %d)", e.IndexA, e.Value, e.IndexB)
-}
-
 type uniqueItemsValidator struct {
 	unique bool
 }

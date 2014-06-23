@@ -4,21 +4,6 @@ import (
 	"fmt"
 )
 
-type ErrInvalidDependency struct {
-	Property   string
-	Dependency string
-	Schema     *Schema
-	Err        error
-}
-
-func (e *ErrInvalidDependency) Error() string {
-	if e.Schema != nil {
-		return fmt.Sprintf("Invalid property %q: faile to validate dependecy: %s", e.Property, e.Err)
-	} else {
-		return fmt.Sprintf("Invalid property %q: missing property: %q", e.Property, e.Dependency)
-	}
-}
-
 type dependenciesValidator struct {
 	dependencies map[string]interface{}
 }

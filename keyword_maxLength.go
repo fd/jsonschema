@@ -6,15 +6,6 @@ import (
 	"unicode/utf8"
 )
 
-type ErrTooLong struct {
-	max int
-	was interface{}
-}
-
-func (e *ErrTooLong) Error() string {
-	return fmt.Sprintf("expected len(%#v) to be smaller than %v", e.was, e.max)
-}
-
 type maxLengthValidator struct {
 	max int
 }

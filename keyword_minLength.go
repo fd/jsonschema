@@ -6,15 +6,6 @@ import (
 	"unicode/utf8"
 )
 
-type ErrTooShort struct {
-	min int
-	was interface{}
-}
-
-func (e *ErrTooShort) Error() string {
-	return fmt.Sprintf("expected len(%#v) to be larger than %v", e.was, e.min)
-}
-
 type minLengthValidator struct {
 	min int
 }

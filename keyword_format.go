@@ -4,15 +4,6 @@ import (
 	"fmt"
 )
 
-type ErrInvalidFormat struct {
-	Value  interface{}
-	Format string
-}
-
-func (e *ErrInvalidFormat) Error() string {
-	return fmt.Sprintf("%#v did not match format '%s'", e.Value, e.Format)
-}
-
 type formatValidator struct {
 	name   string
 	format FormatValidator

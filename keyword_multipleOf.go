@@ -6,15 +6,6 @@ import (
 	"math"
 )
 
-type ErrNotMultipleOf struct {
-	factor float64
-	was    interface{}
-}
-
-func (e *ErrNotMultipleOf) Error() string {
-	return fmt.Sprintf("expected %#v to be a multiple of %v", e.was, e.factor)
-}
-
 type multipleOfValidator struct {
 	factor float64
 }

@@ -4,14 +4,6 @@ import (
 	"fmt"
 )
 
-type ErrRequiredProperty struct {
-	expected string
-}
-
-func (e *ErrRequiredProperty) Error() string {
-	return fmt.Sprintf("missing required property: %q", e.expected)
-}
-
 type requiredValidator struct {
 	required []string
 }

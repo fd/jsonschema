@@ -5,20 +5,6 @@ import (
 	"fmt"
 )
 
-type ErrTooSmall struct {
-	min       float64
-	exclusive bool
-	was       interface{}
-}
-
-func (e *ErrTooSmall) Error() string {
-	if e.exclusive {
-		return fmt.Sprintf("expected %#v to be larger than %v", e.was, e.min)
-	} else {
-		return fmt.Sprintf("expected %#v to be larger than or equal to %v", e.was, e.min)
-	}
-}
-
 type minimumValidator struct {
 	min       float64
 	exclusive bool

@@ -4,15 +4,6 @@ import (
 	"fmt"
 )
 
-type ErrNotNot struct {
-	Value  interface{}
-	Schema *Schema
-}
-
-func (e *ErrNotNot) Error() string {
-	return fmt.Sprintf("value must not be valid for: %v", e.Schema)
-}
-
 type notValidator struct {
 	schema *Schema
 }

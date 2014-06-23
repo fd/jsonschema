@@ -5,15 +5,6 @@ import (
 	"regexp"
 )
 
-type ErrInvalidProperty struct {
-	Property string
-	Err      error
-}
-
-func (e *ErrInvalidProperty) Error() string {
-	return fmt.Sprintf("Invalid property %q: %s", e.Property, e.Err)
-}
-
 type propertiesValidator struct {
 	properties           map[string]*Schema
 	patterns             []*patternProperty

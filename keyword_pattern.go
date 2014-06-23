@@ -5,15 +5,6 @@ import (
 	"regexp"
 )
 
-type ErrInvalidPattern struct {
-	pattern string
-	was     string
-}
-
-func (e *ErrInvalidPattern) Error() string {
-	return fmt.Sprintf("expected %#v to be maych %q", e.was, e.pattern)
-}
-
 type patternValidator struct {
 	pattern string
 	regexp  *regexp.Regexp
