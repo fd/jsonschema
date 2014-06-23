@@ -56,6 +56,6 @@ func (v *allOfValidator) Validate(x interface{}, ctx *Context) {
 	}
 
 	if failed {
-		ctx.Report(&ErrNotAllOf{x, v.schemas, errors})
+		ctx.Report(&ErrNotAllOf{x, ctx.CurrentSchema(), v.schemas, errors})
 	}
 }

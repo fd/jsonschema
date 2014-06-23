@@ -6,21 +6,57 @@ import (
 	"strings"
 )
 
+func init() {
+	var err Error
+	// err = &ErrInvalidDependency{}
+	// err = &ErrInvalidEnum{}
+	// err = &ErrInvalidFormat{}
+	// err = &ErrInvalidInstance{}
+	// err = &ErrInvalidItem{}
+	// err = &ErrInvalidPattern{}
+	// err = &ErrInvalidProperty{}
+	// err = &ErrInvalidType{}
+	err = &ErrNotAllOf{}
+	// err = &ErrNotAnyOf{}
+	// err = &ErrNotMultipleOf{}
+	// err = &ErrNotNot{}
+	// err = &ErrNotOneOf{}
+	// err = &ErrNotUnique{}
+	// err = &ErrRequiredProperty{}
+	// err = &ErrTooLarge{}
+	// err = &ErrTooLong{}
+	// err = &ErrTooShort{}
+	// err = &ErrTooSmall{}
+	_ = err
+}
+
+type Error interface {
+	Error() string
+	Value() interface{}
+	Keyword() string
+	Schema() *Schema
+}
+
 // ErrNotAllOf is returned when a `allOf` keyword failed.
 type ErrNotAllOf struct {
-	Value   interface{}
-	Schemas []*Schema
-	Errors  []error
+	value      interface{}
+	schema     *Schema
+	subschemas []*Schema
+	errors     []error
 }
+
+func (e *ErrNotAllOf) Schema() *Schema    { return e.schema }
+func (e *ErrNotAllOf) Value() interface{} { return e.value }
+func (e *ErrNotAllOf) Keyword() string    { return "allOf" }
 
 func (e *ErrNotAllOf) Error() string {
 	var buf bytes.Buffer
 
 	fmt.Fprintf(&buf, "value must be all of:")
 
-	for i, schema := range e.Schemas {
+	for i, schema := range e.subschemas {
 		var (
-			err    = e.Errors[i]
+			err    = e.errors[i]
 			errstr = "<nil>"
 		)
 
@@ -28,7 +64,7 @@ func (e *ErrNotAllOf) Error() string {
 			errstr = strings.Replace(err.Error(), "\n", "\n    ", -1)
 		}
 
-		fmt.Fprintf(&buf, "\n- schema: %v\n  error:\n    %v", schema, errstr)
+		fmt.Fprintf(&buf, "\n- schema: %v\n  error:\n    %v", schema.Id.String(), errstr)
 	}
 
 	return buf.String()

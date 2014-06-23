@@ -33,6 +33,12 @@ func (c *Context) UpdateValue(x interface{}) {
 	frame.value = x
 }
 
+func (c *Context) CurrentSchema() *Schema {
+	l := len(c.stack)
+	frame := &c.stack[l-1]
+	return frame.schema
+}
+
 func (c *Context) ValidateValueWith(x interface{}, schema *Schema) (interface{}, error) {
 	l := len(c.stack)
 
