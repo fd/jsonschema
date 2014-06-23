@@ -15,7 +15,7 @@ type Builder interface {
 
 type builder struct {
 	env        *Env
-	stack      []*builderStackFrame
+	stack      []builderStackFrame
 	references map[string]*Schema
 }
 
@@ -28,6 +28,7 @@ func newBuilder(env *Env) *builder {
 	return &builder{
 		env:        env,
 		references: map[string]*Schema{},
+		stack:      make([]builderStackFrame, 0, 1024),
 	}
 }
 
@@ -89,12 +90,16 @@ func (b *builder) Build(pointer string, v map[string]interface{}) (*Schema, erro
 		b.references[normalizeRef(inlineId.String())] = schema
 	}
 
-	frame := &builderStackFrame{
+	if len(b.stack) >= 1024 {
+		return nil, fmt.Errorf("builder stack is too deep")
+	}
+
+	b.stack = append(b.stack, builderStackFrame{
 		schema:   schema,
 		keywords: make(map[string]bool, len(v)),
-	}
-	b.stack = append(b.stack, frame)
+	})
 	defer func() { b.stack = b.stack[:len(b.stack)-1] }()
+	frame := &b.stack[len(b.stack)-1]
 
 	{
 		root := b.stack[0].schema

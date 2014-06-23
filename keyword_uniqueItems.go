@@ -1,5 +1,9 @@
 package jsonschema
 
+import (
+	"sort"
+)
+
 type uniqueItemsValidator struct {
 	unique bool
 }
@@ -19,14 +23,22 @@ func (v *uniqueItemsValidator) Validate(x interface{}, ctx *Context) {
 		return
 	}
 
-	l := len(y)
-	skip := make(map[int]bool, l)
+	var (
+		l       = len(y)
+		skipbuf [32]int
+		skip    = skipbuf[:0]
+	)
+
+	if l > cap(skip) {
+		skip = make([]int, 0, l)
+	}
+
 	for i := 0; i < l; i++ {
-		if skip[i] {
+		if containsInt(skip, i) {
 			continue
 		}
 		for j := i + 1; j < l; j++ {
-			if skip[j] {
+			if containsInt(skip, j) {
 				continue
 			}
 
@@ -34,16 +46,26 @@ func (v *uniqueItemsValidator) Validate(x interface{}, ctx *Context) {
 
 			equal, err := isEqual(a, b)
 			if err != nil {
-				skip[j] = true
+				skip = append(skip, j)
+				sort.Ints(skip)
 				ctx.Report(err)
 				continue
 			}
 
 			// other values
 			if equal {
-				skip[j] = true
+				skip = append(skip, j)
+				sort.Ints(skip)
 				ctx.Report(&ErrNotUnique{i, j, a})
 			}
 		}
 	}
+}
+
+func containsInt(s []int, x int) bool {
+	idx := sort.SearchInts(s, x)
+	if idx == len(s) {
+		return false
+	}
+	return s[idx] == x
 }

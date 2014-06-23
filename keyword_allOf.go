@@ -37,18 +37,22 @@ func (v *allOfValidator) Setup(builder Builder) error {
 
 func (v *allOfValidator) Validate(x interface{}, ctx *Context) {
 	var (
-		errors = make([]error, len(v.schemas))
+		errors []error
 		failed = false
 	)
 
 	for i, schema := range v.schemas {
-		err := ctx.ValidateWith(schema)
+		err := ctx.ValidateSelfWith(schema)
 
 		if err != nil {
 			failed = true
-		}
 
-		errors[i] = err
+			if errors == nil {
+				errors = make([]error, len(v.schemas))
+			}
+
+			errors[i] = err
+		}
 	}
 
 	if failed {

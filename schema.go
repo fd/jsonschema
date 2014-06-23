@@ -25,13 +25,7 @@ type FormatValidator interface {
 }
 
 func (s *Schema) Validate(v interface{}) error {
-	var (
-		ctx Context
-	)
-
-	ctx.value = v
-	ctx.results = map[string]error{}
-	return ctx.ValidateWith(s)
+	return newContext().ValidateValueWith(v, s)
 }
 
 func (s *Schema) ValidateData(d []byte) error {
