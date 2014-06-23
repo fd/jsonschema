@@ -51,13 +51,11 @@ func (v *typeValidator) Validate(x interface{}, ctx *Context) {
 		switch t {
 		case ArrayType:
 			if _, ok := x.([]interface{}); ok && x != nil {
-				ctx.Type = ArrayType
 				return
 			}
 
 		case BooleanType:
 			if _, ok := x.(bool); ok {
-				ctx.Type = BooleanType
 				return
 			}
 
@@ -65,14 +63,12 @@ func (v *typeValidator) Validate(x interface{}, ctx *Context) {
 			if y, ok := x.(json.Number); ok {
 				_, err := y.Int64()
 				if err == nil {
-					ctx.Type = IntegerType
 					return
 				}
 			}
 
 		case NullType:
 			if x == nil {
-				ctx.Type = NullType
 				return
 			}
 
@@ -80,20 +76,17 @@ func (v *typeValidator) Validate(x interface{}, ctx *Context) {
 			if y, ok := x.(json.Number); ok {
 				_, err := y.Float64()
 				if err == nil {
-					ctx.Type = NumberType
 					return
 				}
 			}
 
 		case ObjectType:
 			if _, ok := x.(map[string]interface{}); ok && x != nil {
-				ctx.Type = ObjectType
 				return
 			}
 
 		case StringType:
 			if _, ok := x.(string); ok {
-				ctx.Type = StringType
 				return
 			}
 

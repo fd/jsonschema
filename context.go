@@ -1,8 +1,6 @@
 package jsonschema
 
 type Context struct {
-	Type PrimitiveType
-
 	value   interface{}
 	errors  []error
 	results map[string]error
