@@ -43,6 +43,7 @@ func init() {
 	RootEnv.RegisterFormat("ipv6", &ipv6Format{})
 	RootEnv.RegisterFormat("regex", &regexFormat{})
 	RootEnv.RegisterFormat("uri", &uriFormat{})
+	RootEnv.RegisterFormat("uri-reference", &uriReferenceFormat{})
 
 	// Set the root Schema
 	schema, err := RootEnv.RegisterSchema("", draft4)
@@ -88,7 +89,7 @@ var draft4 = []byte(`
 		"properties": {
 			"id": {
 				"type": "string",
-				"format": "uri"
+				"format": "uri-reference"
 			},
 			"$schema": {
 				"type": "string",

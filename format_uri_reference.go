@@ -4,9 +4,9 @@ import (
 	"net/url"
 )
 
-type uriFormat struct{}
+type uriReferenceFormat struct{}
 
-func (*uriFormat) IsValid(x interface{}) bool {
+func (*uriReferenceFormat) IsValid(x interface{}) bool {
 	s, ok := x.(string)
 	if !ok {
 		return true
@@ -14,14 +14,6 @@ func (*uriFormat) IsValid(x interface{}) bool {
 
 	u, err := url.Parse(s)
 	if err != nil {
-		return false
-	}
-
-	if u.Scheme == "" {
-		return false
-	}
-
-	if u.Host == "" {
 		return false
 	}
 
