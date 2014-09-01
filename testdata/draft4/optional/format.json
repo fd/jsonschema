@@ -38,6 +38,11 @@
                 "description": "an invalid URI though valid URI reference",
                 "data": "abc",
                 "valid": false
+            },
+            {
+                "description": "a valid URI with percentage encode path components",
+                "data": "http://example.com/foo%20bar",
+                "valid": true
             }
         ]
     },
